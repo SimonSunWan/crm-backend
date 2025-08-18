@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
+from app.schemas.base import ApiResponse, Token
 
 
 class UserBase(BaseModel):
@@ -31,3 +32,12 @@ class UserResponse(UserBase):
     updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True, "exclude": {"hashed_password"}}
+
+
+class UserLogin(BaseModel):
+    user_name: str
+    password: str
+
+
+class LoginResponse(ApiResponse):
+    data: Token
