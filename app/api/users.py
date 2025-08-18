@@ -1,11 +1,36 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.auth import get_current_user
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.schemas.base import ApiResponse
 from app.crud.user import user_crud
+from app.models.user import User
 
 router = APIRouter()
+
+
+def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
+    """获取当前登录用户的依赖函数"""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="无效的认证头")
+    
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="无效的token或用户不存在")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="用户已被禁用")
+    return user
+
+
+@router.get("/me", response_model=ApiResponse)
+def get_current_user_info(current_user: User = Depends(get_current_user_dependency)):
+    """获取当前登录用户的个人信息"""
+    try:
+        return ApiResponse(data=UserResponse.model_validate(current_user))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取用户信息失败: {str(e)}")
 
 
 @router.get("/", response_model=ApiResponse)
