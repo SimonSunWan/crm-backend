@@ -27,12 +27,13 @@ async def lifespan(app: FastAPI):
         if not existing_admin:
             # 创建默认超级管理员
             admin_data = {
-                "user_name": "admin",
+                "email": "super@example.com",
+                "phone": "18888888888",
+                "user_name": "super",
                 "full_name": "超级管理员",
-                "email": "admin@example.com",
-                "password": "Admin@3000",
+                "password": "super@3000",
                 "is_active": True,
-                "is_superuser": True
+                "role": "SUPER"
             }
             user_crud.create(db, admin_data)
     finally:

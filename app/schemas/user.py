@@ -7,9 +7,11 @@ from app.schemas.base import ApiResponse, Token
 class UserBase(BaseModel):
 
     email: EmailStr
+    phone: Optional[str] = None
     user_name: str
     full_name: Optional[str] = None
     is_active: bool = True
+    role: str
 
 
 class UserCreate(UserBase):
@@ -20,9 +22,11 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     user_name: Optional[str] = None
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
+    role: Optional[str] = None
 
 
 class UserResponse(UserBase):
