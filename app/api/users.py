@@ -34,11 +34,27 @@ def get_current_user_info(current_user: User = Depends(get_current_user_dependen
 
 
 @router.get("/", response_model=ApiResponse)
-def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_users(current: int = 1, size: int = 100, db: Session = Depends(get_db)):
     """获取用户列表"""
     try:
-        users = user_crud.get_multi(db, skip=skip, limit=limit)
-        return ApiResponse(data=users)
+        skip = (current - 1) * size
+        users = user_crud.get_multi(db, skip=skip, limit=size)
+        
+        # 获取总数
+        total = db.query(user_crud.model).count()
+        
+        # 将SQLAlchemy模型转换为Pydantic模型
+        user_responses = [UserResponse.model_validate(user) for user in users]
+        
+        # 返回包含分页信息的响应
+        response_data = {
+            "records": user_responses,
+            "total": total,
+            "current": current,
+            "size": size
+        }
+        
+        return ApiResponse(data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取用户列表失败: {str(e)}")
 
@@ -48,7 +64,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """创建用户"""
     try:
         created_user = user_crud.create(db, user.model_dump())
-        return ApiResponse(message="用户创建成功", data=created_user)
+        return ApiResponse(message="用户创建成功", data=UserResponse.model_validate(created_user))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"创建用户失败: {str(e)}")
 
@@ -58,7 +74,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     """获取单个用户"""
     try:
         user = user_crud.get_or_404(db, user_id, "用户未找到")
-        return ApiResponse(data=user)
+        return ApiResponse(data=UserResponse.model_validate(user))
     except HTTPException:
         raise
     except Exception as e:
@@ -71,7 +87,7 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
     try:
         user = user_crud.get_or_404(db, user_id, "用户未找到")
         updated_user = user_crud.update(db, user, user_update.model_dump(exclude_unset=True))
-        return ApiResponse(message="用户更新成功", data=updated_user)
+        return ApiResponse(message="用户更新成功", data=UserResponse.model_validate(updated_user))
     except HTTPException:
         raise
     except Exception as e:

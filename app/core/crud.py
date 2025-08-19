@@ -34,3 +34,17 @@ class CRUDBase(Generic[ModelType]):
         if obj is None:
             raise HTTPException(status_code=404, detail=error_message)
         return obj
+
+    def update(self, db: Session, db_obj: ModelType, obj_in: dict) -> ModelType:
+        """更新记录"""
+        for field, value in obj_in.items():
+            if hasattr(db_obj, field):
+                setattr(db_obj, field, value)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    def delete(self, db: Session, db_obj: ModelType) -> None:
+        """删除记录"""
+        db.delete(db_obj)
+        db.commit()
