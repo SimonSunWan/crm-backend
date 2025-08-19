@@ -17,7 +17,7 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误"
         )
-    if not user.is_active:
+    if not user.status:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="用户已被禁用"

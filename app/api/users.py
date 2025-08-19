@@ -19,7 +19,7 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
     user = get_current_user(token, db)
     if not user:
         raise HTTPException(status_code=401, detail="无效的token或用户不存在")
-    if not user.is_active:
+    if not user.status:
         raise HTTPException(status_code=400, detail="用户已被禁用")
     return user
 

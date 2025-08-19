@@ -31,9 +31,9 @@ async def lifespan(app: FastAPI):
                 "email": "super@example.com",
                 "phone": "18888888888",
                 "user_name": "Super",
-                "full_name": "超级管理员",
+                "nick_name": "超级管理员",
                 "password": "Super@3000",
-                "is_active": True,
+                "status": True,
                 "roles": ["SUPER"]
             }
             user_crud.create(db, admin_data)

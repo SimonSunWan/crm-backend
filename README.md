@@ -1,114 +1,86 @@
 # CRM Backend
 
-一个基于FastAPI的CRM系统后端API。
+一个基于FastAPI的CRM后端系统。
 
-## 功能特性
+## 特性
 
+- FastAPI + SQLAlchemy + Pydantic
+- JWT认证
 - 用户管理
 - 客户管理
-- RESTful API
 - 数据库迁移
-- 自动生成API文档
 
-## 技术栈
+## 字段命名转换
 
-- FastAPI
-- SQLAlchemy
-- PostgreSQL
-- Alembic
-- Pydantic
+本项目支持数据库字段下划线和前端驼峰命名的自动转换：
+
+### 数据库字段（下划线）
+```python
+# 数据库模型
+class User(Base):
+    user_name = Column(String)
+    nick_name = Column(String)
+    status = Column(Boolean)
+    create_time = Column(DateTime)
+    update_time = Column(DateTime)
+    create_by = Column(String)
+    update_by = Column(String)
+```
+
+### API响应（驼峰）
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "id": 1,
+    "userName": "john_doe",
+    "nickName": "John Doe",
+    "status": true,
+    "createTime": "2024-01-01T00:00:00",
+    "updateTime": "2024-01-01T00:00:00",
+    "createBy": "admin",
+    "updateBy": "admin"
+  }
+}
+```
+
+### 实现方式
+
+使用Pydantic的`alias_generator`自动转换：
+
+```python
+class CamelCaseModel(BaseModel):
+    model_config = ConfigDict(
+        alias_generator=to_camel_case,
+        populate_by_name=True,
+        from_attributes=True
+    )
+```
 
 ## 安装和运行
 
-1. 克隆项目
-```bash
-git clone <repository-url>
-cd crm-backend
-```
-
-2. 创建虚拟环境
-```bash
-python -m venv venv
-```
-
-3. 激活虚拟环境
-```bash
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-4. 安装依赖
+1. 安装依赖：
 ```bash
 pip install -r requirements.txt
 ```
 
-5. 配置环境变量
+2. 配置环境变量：
 ```bash
-cp env.example .env
-# 编辑.env文件，配置数据库连接等信息
+cp .env.example .env
+# 编辑.env文件
 ```
 
-6. 运行数据库迁移
+3. 运行数据库迁移：
 ```bash
-alembic current
-alembic history
 alembic upgrade head
 ```
 
-7. 启动服务器
+4. 启动服务：
 ```bash
 uvicorn app.main:app --reload
 ```
 
 ## API文档
 
-启动服务器后，访问以下地址查看API文档：
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## 项目结构
-
-```
-crm-backend/
-├── app/
-│   ├── api/
-│   │   ├── users.py
-│   │   ├── customers.py
-│   │   └── api.py
-│   ├── core/
-│   │   ├── config.py
-│   │   └── database.py
-│   ├── models/
-│   │   ├── user.py
-│   │   └── customer.py
-│   ├── schemas/
-│   │   ├── user.py
-│   │   └── customer.py
-│   └── main.py
-├── alembic/
-│   ├── versions/
-│   ├── env.py
-│   └── script.py.mako
-├── requirements.txt
-├── alembic.ini
-└── README.md
-```
-
-## 开发
-
-### 创建新的数据库迁移
-
-```bash
-alembic revision --autogenerate -m "描述"
-alembic upgrade head
-```
-
-### 运行测试
-
-```bash
-pytest
-```
+访问 http://localhost:8000/docs 查看API文档。

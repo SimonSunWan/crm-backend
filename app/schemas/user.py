@@ -1,16 +1,16 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, Any, List
 from datetime import datetime
-from app.schemas.base import ApiResponse, Token
+from app.schemas.base import ApiResponse, Token, CamelCaseModel
 
 
-class UserBase(BaseModel):
+class UserBase(CamelCaseModel):
 
     email: EmailStr
     phone: Optional[str] = None
     user_name: str
-    full_name: Optional[str] = None
-    is_active: bool = True
+    nick_name: Optional[str] = None
+    status: bool = True
     roles: List[str]
 
 
@@ -19,26 +19,28 @@ class UserCreate(UserBase):
     password: str
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(CamelCaseModel):
 
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     user_name: Optional[str] = None
-    full_name: Optional[str] = None
-    is_active: Optional[bool] = None
+    nick_name: Optional[str] = None
+    status: Optional[bool] = None
     roles: Optional[List[str]] = None
 
 
 class UserResponse(UserBase):
 
     id: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+    create_by: Optional[str] = None
+    create_time: Optional[datetime] = None
+    update_by: Optional[str] = None
+    update_time: Optional[datetime] = None
 
-    model_config = {"from_attributes": True, "exclude": {"hashed_password"}}
+    model_config = {"exclude": {"hashed_password"}}
 
 
-class UserLogin(BaseModel):
+class UserLogin(CamelCaseModel):
     user_name: str
     password: str
 
