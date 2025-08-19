@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, ARRAY
 from app.core.database import Base
 from app.models.base import TimestampMixin
 
@@ -14,4 +14,4 @@ class User(Base, TimestampMixin):
     full_name = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
-    role = Column(String, nullable=True)
+    roles = Column(ARRAY(String), nullable=True)

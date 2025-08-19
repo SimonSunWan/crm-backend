@@ -9,6 +9,7 @@ from app.crud.user import user_crud
 from app.schemas.base import ApiResponse
 import traceback
 import logging
+from sqlalchemy import any_
 
 # 配置日志
 logging.basicConfig(level=logging.DEBUG)
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
     try:
         # 检查是否已存在超级管理员
         existing_admin = db.query(user_crud.model).filter(
-            user_crud.model.user_name == "admin"
+            (user_crud.model.user_name == "Super") & ("SUPER" == any_(user_crud.model.roles))
         ).first()
         
         if not existing_admin:
@@ -29,11 +30,11 @@ async def lifespan(app: FastAPI):
             admin_data = {
                 "email": "super@example.com",
                 "phone": "18888888888",
-                "user_name": "super",
+                "user_name": "Super",
                 "full_name": "超级管理员",
-                "password": "super@3000",
+                "password": "Super@3000",
                 "is_active": True,
-                "role": "SUPER"
+                "roles": ["SUPER"]
             }
             user_crud.create(db, admin_data)
     finally:

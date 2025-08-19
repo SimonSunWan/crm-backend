@@ -53,6 +53,8 @@ cp env.example .env
 
 6. 运行数据库迁移
 ```bash
+alembic current
+alembic history
 alembic upgrade head
 ```
 

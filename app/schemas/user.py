@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Any
+from typing import Optional, Any, List
 from datetime import datetime
 from app.schemas.base import ApiResponse, Token
 
@@ -11,7 +11,7 @@ class UserBase(BaseModel):
     user_name: str
     full_name: Optional[str] = None
     is_active: bool = True
-    role: str
+    roles: List[str]
 
 
 class UserCreate(UserBase):
@@ -26,7 +26,7 @@ class UserUpdate(BaseModel):
     user_name: Optional[str] = None
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
-    role: Optional[str] = None
+    roles: Optional[List[str]] = None
 
 
 class UserResponse(UserBase):
