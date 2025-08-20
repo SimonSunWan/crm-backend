@@ -52,6 +52,58 @@ def get_dictionary_types(current: int = 1, size: int = 100, db: Session = Depend
         raise HTTPException(status_code=500, detail=f"获取字典类型列表失败: {str(e)}")
 
 
+@router.get("/by-code/{code}", response_model=ApiResponse)
+def get_dictionary_by_code(code: str, db: Session = Depends(get_db)):
+    """根据字典编码获取字典数据"""
+    try:
+        # 根据编码获取字典类型
+        dictionary_type = dictionary_type_crud.get_by_code(db, code)
+        if not dictionary_type:
+            raise HTTPException(status_code=404, detail="字典类型不存在")
+        
+        # 获取该类型下的所有字典枚举
+        enums = dictionary_enum_crud.get_by_type_id(db, dictionary_type.id, skip=0, limit=1000)
+        
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in enums]
+        
+        response_data = {
+            "type": DictionaryTypeResponse.model_validate(dictionary_type),
+            "enums": enum_responses
+        }
+        
+        return ApiResponse(data=response_data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取字典数据失败: {str(e)}")
+
+
+@router.get("/public/by-code/{code}", response_model=ApiResponse)
+def get_dictionary_by_code_public(code: str, db: Session = Depends(get_db)):
+    """根据字典编码获取字典数据（公开接口，无需认证）"""
+    try:
+        # 根据编码获取字典类型
+        dictionary_type = dictionary_type_crud.get_by_code(db, code)
+        if not dictionary_type:
+            raise HTTPException(status_code=404, detail="字典类型不存在")
+        
+        # 获取该类型下的所有字典枚举
+        enums = dictionary_enum_crud.get_by_type_id(db, dictionary_type.id, skip=0, limit=1000)
+        
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in enums]
+        
+        response_data = {
+            "type": DictionaryTypeResponse.model_validate(dictionary_type),
+            "enums": enum_responses
+        }
+        
+        return ApiResponse(data=response_data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取字典数据失败: {str(e)}")
+
+
 @router.post("/types", response_model=ApiResponse)
 def create_dictionary_type(type_data: DictionaryTypeCreate, db: Session = Depends(get_db)):
     """创建字典类型"""

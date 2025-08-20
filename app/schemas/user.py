@@ -10,7 +10,7 @@ class UserBase(CamelCaseModel):
     phone: Optional[str] = None
     user_name: str
     nick_name: Optional[str] = None
-    status: bool = True
+    status: str
     roles: List[str]
 
 
@@ -25,7 +25,7 @@ class UserUpdate(CamelCaseModel):
     phone: Optional[str] = None
     user_name: Optional[str] = None
     nick_name: Optional[str] = None
-    status: Optional[bool] = None
+    status: Optional[str] = None
     roles: Optional[List[str]] = None
 
 
