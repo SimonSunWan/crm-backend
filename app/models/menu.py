@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import TimestampMixin
+from app.models.role_menu import role_menu
 
 
 class Menu(Base, TimestampMixin):
@@ -36,3 +37,6 @@ class Menu(Base, TimestampMixin):
     
     # 关系
     children = relationship("Menu", backref="parent", remote_side=[id])
+    
+    # 与角色的多对多关系
+    roles = relationship("Role", secondary=role_menu, back_populates="menus")

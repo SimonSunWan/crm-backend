@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import TimestampMixin
 from app.models.user_role import user_role
+from app.models.role_menu import role_menu
 
 
 class Role(Base, TimestampMixin):
@@ -20,3 +21,6 @@ class Role(Base, TimestampMixin):
     
     # 与用户的多对多关系
     users = relationship("User", secondary=user_role, back_populates="roles")
+    
+    # 与菜单的多对多关系
+    menus = relationship("Menu", secondary=role_menu, back_populates="roles")

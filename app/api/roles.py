@@ -161,3 +161,52 @@ def delete_role(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除角色失败: {str(e)}")
+
+
+@router.get("/{role_id}/menus", response_model=ApiResponse)
+def get_role_menus(
+    role_id: int,
+    db: Session = Depends(get_db)
+):
+    """获取角色的菜单权限"""
+    try:
+        role = role_crud.get_or_404(db, role_id, "角色未找到")
+        
+        # 获取角色关联的菜单ID列表
+        menu_ids = [menu.id for menu in role.menus]
+        
+        return ApiResponse(data={"menuIds": menu_ids})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取角色菜单权限失败: {str(e)}")
+
+
+@router.post("/{role_id}/menus", response_model=ApiResponse)
+def update_role_menus(
+    role_id: int,
+    menu_ids: list[int],
+    current_user: User = Depends(get_current_user_dependency),
+    db: Session = Depends(get_db)
+):
+    """更新角色的菜单权限"""
+    try:
+        role = role_crud.get_or_404(db, role_id, "角色未找到")
+        
+        # 获取所有菜单
+        from app.models.menu import Menu
+        menus = db.query(Menu).filter(Menu.id.in_(menu_ids)).all()
+        
+        # 清空当前角色的菜单权限
+        role.menus.clear()
+        
+        # 添加新的菜单权限
+        role.menus.extend(menus)
+        
+        db.commit()
+        return ApiResponse(message="角色菜单权限更新成功")
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"更新角色菜单权限失败: {str(e)}")

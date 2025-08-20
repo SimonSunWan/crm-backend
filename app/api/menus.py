@@ -172,27 +172,15 @@ def get_navigation_menus(
         # 过滤用户有权限的菜单
         authorized_menu_ids = set()
         for menu in menus:
-            if not menu.roles:
-                # 如果没有设置角色限制，则所有用户都可以访问
+            # 检查菜单是否与用户的角色关联
+            menu_has_permission = False
+            for user_role in current_user.roles:
+                if menu in user_role.menus:
+                    menu_has_permission = True
+                    break
+            
+            if menu_has_permission:
                 authorized_menu_ids.add(menu.id)
-            else:
-                # 处理菜单的角色权限（支持多种格式）
-                menu_roles = []
-                try:
-                    import json
-                    # 尝试解析为JSON数组
-                    parsed_roles = json.loads(menu.roles)
-                    if isinstance(parsed_roles, list):
-                        menu_roles = parsed_roles
-                    else:
-                        menu_roles = [str(parsed_roles)]
-                except (json.JSONDecodeError, TypeError):
-                    # 如果不是JSON，按逗号分隔处理
-                    menu_roles = [role.strip() for role in menu.roles.split(',') if role.strip()]
-                
-                # 检查用户角色是否与菜单角色有交集
-                if any(role in user_roles for role in menu_roles):
-                    authorized_menu_ids.add(menu.id)
         
         # 构建树形结构，只包含有权限的菜单
         def build_authorized_tree(parent_id=None):
@@ -202,20 +190,8 @@ def get_navigation_menus(
                     # 递归构建子菜单
                     children = build_authorized_tree(menu.id)
                     
-                    # 解析菜单角色
-                    menu_roles = []
-                    if menu.roles:
-                        try:
-                            import json
-                            # 尝试解析为JSON数组
-                            parsed_roles = json.loads(menu.roles)
-                            if isinstance(parsed_roles, list):
-                                menu_roles = parsed_roles
-                            else:
-                                menu_roles = [str(parsed_roles)]
-                        except (json.JSONDecodeError, TypeError):
-                            # 如果不是JSON，按逗号分隔处理
-                            menu_roles = [role.strip() for role in menu.roles.split(',') if role.strip()]
+                    # 获取菜单关联的角色
+                    menu_roles = [role.role_code for role in menu.roles] if menu.roles else []
                     
                     # 转换为字典格式
                     menu_dict = {
@@ -233,7 +209,7 @@ def get_navigation_menus(
                             "isIframe": menu.is_iframe,
                             "link": menu.link,
                             "isEnable": menu.is_enable,
-                            "roles": menu_roles,  # 使用已经解析的角色列表
+                            "roles": menu_roles,
                             "authList": []  # 权限列表需要单独处理
                         },
                         "children": children
