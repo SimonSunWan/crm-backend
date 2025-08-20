@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, Text
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import TimestampMixin
+from app.models.user_role import user_role
 
 
 class Role(Base, TimestampMixin):
@@ -15,3 +17,6 @@ class Role(Base, TimestampMixin):
     status = Column(Boolean, default=True, comment="启用状态")
     create_by = Column(String(50), nullable=True, comment="创建人")
     update_by = Column(String(50), nullable=True, comment="更新人")
+    
+    # 与用户的多对多关系
+    users = relationship("User", secondary=user_role, back_populates="roles")

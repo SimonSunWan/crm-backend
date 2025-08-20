@@ -158,7 +158,7 @@ def get_navigation_menus(
     """获取导航菜单（用于左侧菜单和动态路由）"""
     try:
         # 根据用户角色获取菜单
-        user_roles = current_user.roles or []
+        user_roles = [role.role_code for role in current_user.roles] if current_user.roles else []
         if not user_roles:
             # 如果没有角色，返回空菜单
             return ApiResponse(code=200, message="操作成功", data=[])

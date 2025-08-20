@@ -20,9 +20,13 @@ async def lifespan(app: FastAPI):
     # 启动时执行
     db = SessionLocal()
     try:
+        # 初始化角色数据
+        from init_roles import init_roles
+        init_roles()
+        
         # 检查是否已存在超级管理员
         existing_admin = db.query(user_crud.model).filter(
-            (user_crud.model.user_name == "Super") & ("SUPER" == any_(user_crud.model.roles))
+            user_crud.model.user_name == "Super"
         ).first()
         
         if not existing_admin:
@@ -33,10 +37,16 @@ async def lifespan(app: FastAPI):
                 "user_name": "Super",
                 "nick_name": "超级管理员",
                 "password": "Super@3000",
-                "status": True,
-                "roles": ["SUPER"]
+                "status": True
             }
-            user_crud.create(db, admin_data)
+            created_user = user_crud.create(db, admin_data)
+            
+            # 为超级管理员分配SUPER角色
+            from app.models.role import Role
+            super_role = db.query(Role).filter(Role.role_code == "SUPER").first()
+            if super_role and created_user:
+                created_user.roles.append(super_role)
+                db.commit()
     finally:
         db.close()
     

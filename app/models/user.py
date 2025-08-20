@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, ARRAY, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import TimestampMixin
+from app.models.user_role import user_role
 
 
 class User(Base, TimestampMixin):
@@ -18,4 +20,6 @@ class User(Base, TimestampMixin):
     phone = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    roles = Column(ARRAY(String), nullable=True)
+    
+    # 与角色的多对多关系
+    roles = relationship("Role", secondary=user_role, back_populates="users")
