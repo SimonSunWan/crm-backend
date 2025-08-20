@@ -170,38 +170,78 @@ def get_navigation_menus(
         ).all()
         
         # 过滤用户有权限的菜单
-        authorized_menus = []
+        authorized_menu_ids = set()
         for menu in menus:
-            if not menu.roles or any(role in user_roles for role in menu.roles.split(',')):
-                authorized_menus.append(menu)
+            if not menu.roles:
+                # 如果没有设置角色限制，则所有用户都可以访问
+                authorized_menu_ids.add(menu.id)
+            else:
+                # 处理菜单的角色权限（支持多种格式）
+                menu_roles = []
+                try:
+                    import json
+                    # 尝试解析为JSON数组
+                    parsed_roles = json.loads(menu.roles)
+                    if isinstance(parsed_roles, list):
+                        menu_roles = parsed_roles
+                    else:
+                        menu_roles = [str(parsed_roles)]
+                except (json.JSONDecodeError, TypeError):
+                    # 如果不是JSON，按逗号分隔处理
+                    menu_roles = [role.strip() for role in menu.roles.split(',') if role.strip()]
+                
+                # 检查用户角色是否与菜单角色有交集
+                if any(role in user_roles for role in menu_roles):
+                    authorized_menu_ids.add(menu.id)
         
-        # 构建树形结构
-        menu_tree = menu_crud.get_tree(db)
+        # 构建树形结构，只包含有权限的菜单
+        def build_authorized_tree(parent_id=None):
+            tree = []
+            for menu in menus:
+                if menu.parent_id == parent_id and menu.id in authorized_menu_ids:
+                    # 递归构建子菜单
+                    children = build_authorized_tree(menu.id)
+                    
+                    # 解析菜单角色
+                    menu_roles = []
+                    if menu.roles:
+                        try:
+                            import json
+                            # 尝试解析为JSON数组
+                            parsed_roles = json.loads(menu.roles)
+                            if isinstance(parsed_roles, list):
+                                menu_roles = parsed_roles
+                            else:
+                                menu_roles = [str(parsed_roles)]
+                        except (json.JSONDecodeError, TypeError):
+                            # 如果不是JSON，按逗号分隔处理
+                            menu_roles = [role.strip() for role in menu.roles.split(',') if role.strip()]
+                    
+                    # 转换为字典格式
+                    menu_dict = {
+                        "id": menu.id,
+                        "name": menu.name,
+                        "path": menu.path,
+                        "component": menu.component,
+                        "redirect": menu.redirect,
+                        "meta": {
+                            "title": menu.title,
+                            "icon": menu.icon,
+                            "sort": menu.sort,
+                            "isHide": menu.is_hide,
+                            "keepAlive": menu.is_keep_alive,
+                            "isIframe": menu.is_iframe,
+                            "link": menu.link,
+                            "isEnable": menu.is_enable,
+                            "roles": menu_roles,  # 使用已经解析的角色列表
+                            "authList": []  # 权限列表需要单独处理
+                        },
+                        "children": children
+                    }
+                    tree.append(menu_dict)
+            return tree
         
-        # 转换为前端需要的格式
-        def convert_to_frontend_format(menu):
-            return {
-                "id": menu.id,
-                "name": menu.name,
-                "path": menu.path,
-                "component": menu.component,
-                "redirect": menu.redirect,
-                "meta": {
-                    "title": menu.title,
-                    "icon": menu.icon,
-                    "sort": menu.sort,
-                    "isHide": menu.is_hide,
-                    "keepAlive": menu.is_keep_alive,
-                    "isIframe": menu.is_iframe,
-                    "link": menu.link,
-                    "isEnable": menu.is_enable,
-                    "roles": menu.roles.split(',') if menu.roles else [],
-                    "authList": []  # 权限列表需要单独处理
-                },
-                "children": [convert_to_frontend_format(child) for child in (menu.children or [])]
-            }
-        
-        frontend_menus = [convert_to_frontend_format(menu) for menu in menu_tree]
+        frontend_menus = build_authorized_tree()
         
         return ApiResponse(code=200, message="操作成功", data=frontend_menus)
     except Exception as e:
@@ -216,6 +256,8 @@ def create_menu(
 ):
     """创建菜单"""
     try:
+        print(f"创建菜单 - 接收到的数据: {menu}")
+        
         # 检查菜单名称是否已存在
         if menu_crud.get_by_name(db, menu.name):
             raise HTTPException(status_code=400, detail="菜单名称已存在")
@@ -227,6 +269,8 @@ def create_menu(
         # 创建菜单数据
         menu_data = menu.model_dump()
         menu_data["create_by"] = current_user.user_name
+        
+        print(f"创建菜单 - 处理后的数据: {menu_data}")
         
         # 如果有parent_id，验证父菜单是否存在
         if menu.parent_id:
@@ -242,6 +286,9 @@ def create_menu(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"创建菜单 - 错误详情: {str(e)}")
+        import traceback
+        print(f"创建菜单 - 错误堆栈: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"创建菜单失败: {str(e)}")
 
 
