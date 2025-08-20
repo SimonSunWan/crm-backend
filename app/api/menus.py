@@ -11,6 +11,36 @@ from typing import Optional
 router = APIRouter()
 
 
+def menu_to_response(menu) -> dict:
+    """将Menu对象转换为MenuResponse字典，避免children字段验证问题"""
+    return {
+        "id": menu.id,
+        "name": menu.name,
+        "path": menu.path,
+        "component": menu.component,
+        "redirect": menu.redirect,
+        "title": menu.title,
+        "icon": menu.icon,
+        "sort": menu.sort,
+        "is_hide": menu.is_hide,
+        "is_keep_alive": menu.is_keep_alive,
+        "is_iframe": menu.is_iframe,
+        "link": menu.link,
+        "is_enable": menu.is_enable,
+        "menu_type": menu.menu_type,
+        "parent_id": menu.parent_id,
+        "roles": menu.roles,
+        "auth_name": menu.auth_name,
+        "auth_mark": menu.auth_mark,
+        "auth_sort": menu.auth_sort,
+        "create_by": menu.create_by,
+        "create_time": menu.create_time,
+        "update_by": menu.update_by,
+        "update_time": menu.update_time,
+        "children": []
+    }
+
+
 def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
     """获取当前登录用户的依赖函数"""
     if not authorization.startswith("Bearer "):
@@ -36,32 +66,65 @@ def get_menus(
 ):
     """获取菜单列表"""
     try:
-        skip = (current - 1) * size
+        # 获取所有菜单，构建树形结构
+        all_menus = db.query(menu_crud.model).all()
         
-        # 构建查询
-        query = db.query(menu_crud.model)
+        # 构建树形结构
+        def build_tree(menus, parent_id=None):
+            tree = []
+            for menu in menus:
+                if menu.parent_id == parent_id:
+                    # 递归构建子菜单
+                    children = build_tree(menus, menu.id)
+                    # 使用辅助函数转换为字典，然后设置children
+                    menu_dict = menu_to_response(menu)
+                    menu_dict["children"] = children
+                    menu_response = MenuResponse.model_validate(menu_dict)
+                    tree.append(menu_response)
+            return tree
         
-        # 添加过滤条件
-        if name:
-            query = query.filter(menu_crud.model.name.contains(name))
-        if path:
-            query = query.filter(menu_crud.model.path.contains(path))
-        if menu_type:
-            query = query.filter(menu_crud.model.menu_type == menu_type)
+        # 构建完整的树形结构
+        menu_tree = build_tree(all_menus)
         
-        # 获取总数
-        total = query.count()
+        # 应用过滤条件
+        if name or path or menu_type:
+            def filter_tree(tree, name_filter=None, path_filter=None, type_filter=None):
+                filtered = []
+                for menu in tree:
+                    # 检查当前菜单是否匹配过滤条件
+                    matches = True
+                    if name_filter and name_filter.lower() not in menu.title.lower():
+                        matches = False
+                    if path_filter and path_filter.lower() not in (menu.path or "").lower():
+                        matches = False
+                    if type_filter and type_filter.lower() not in (menu.menu_type or "").lower():
+                        matches = False
+                    
+                    # 递归过滤子菜单
+                    filtered_children = filter_tree(menu.children, name_filter, path_filter, type_filter)
+                    
+                    # 如果当前菜单匹配或者有匹配的子菜单，则包含
+                    if matches or filtered_children:
+                        menu.children = filtered_children
+                        filtered.append(menu)
+                return filtered
+            
+            menu_tree = filter_tree(menu_tree, name, path, menu_type)
         
-        # 获取分页数据
-        menus = query.offset(skip).limit(size).all()
+        # 计算总数（包括所有层级的菜单）
+        def count_total(tree):
+            total = 0
+            for menu in tree:
+                total += 1
+                total += count_total(menu.children)
+            return total
         
-        # 转换为响应模型
-        menu_responses = [MenuResponse.model_validate(menu) for menu in menus]
+        total_count = count_total(menu_tree)
         
-        # 返回包含分页信息的响应
+        # 返回树形结构数据
         response_data = {
-            "records": menu_responses,
-            "total": total,
+            "records": menu_tree,
+            "total": total_count,
             "current": current,
             "size": size
         }
@@ -76,7 +139,12 @@ def get_menu_tree(db: Session = Depends(get_db)):
     """获取菜单树形结构"""
     try:
         menus = menu_crud.get_all_menus(db)
-        menu_responses = [MenuResponse.model_validate(menu) for menu in menus]
+        # 转换为响应模型，处理children字段
+        menu_responses = []
+        for menu in menus:
+            menu_dict = menu_to_response(menu)
+            menu_response = MenuResponse.model_validate(menu_dict)
+            menu_responses.append(menu_response)
         return ApiResponse(code=200, message="操作成功", data=menu_responses)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取菜单树失败: {str(e)}")
@@ -130,7 +198,7 @@ def get_navigation_menus(
                     "roles": menu.roles.split(',') if menu.roles else [],
                     "authList": []  # 权限列表需要单独处理
                 },
-                "children": [convert_to_frontend_format(child) for child in menu.children] if menu.children else []
+                "children": [convert_to_frontend_format(child) for child in (menu.children or [])]
             }
         
         frontend_menus = [convert_to_frontend_format(menu) for menu in menu_tree]
@@ -160,8 +228,17 @@ def create_menu(
         menu_data = menu.model_dump()
         menu_data["create_by"] = current_user.user_name
         
+        # 如果有parent_id，验证父菜单是否存在
+        if menu.parent_id:
+            parent_menu = menu_crud.get_or_404(db, menu.parent_id, "父菜单不存在")
+        
         created_menu = menu_crud.create(db, menu_data)
-        return ApiResponse(code=200, message="菜单创建成功", data=MenuResponse.model_validate(created_menu))
+        
+        # 转换为响应模型，处理children字段
+        menu_dict = menu_to_response(created_menu)
+        menu_response = MenuResponse.model_validate(menu_dict)
+        
+        return ApiResponse(code=200, message="菜单创建成功", data=menu_response)
     except HTTPException:
         raise
     except Exception as e:
@@ -173,7 +250,10 @@ def get_menu(menu_id: int, db: Session = Depends(get_db)):
     """获取单个菜单"""
     try:
         menu = menu_crud.get_or_404(db, menu_id, "菜单未找到")
-        return ApiResponse(code=200, message="操作成功", data=MenuResponse.model_validate(menu))
+        # 转换为响应模型，处理children字段
+        menu_dict = menu_to_response(menu)
+        menu_response = MenuResponse.model_validate(menu_dict)
+        return ApiResponse(code=200, message="操作成功", data=menu_response)
     except HTTPException:
         raise
     except Exception as e:
@@ -206,8 +286,11 @@ def update_menu(
         update_data = menu.model_dump(exclude_unset=True)
         update_data["update_by"] = current_user.user_name
         
-        updated_menu = menu_crud.update(db, menu_id, update_data)
-        return ApiResponse(code=200, message="菜单更新成功", data=MenuResponse.model_validate(updated_menu))
+        updated_menu = menu_crud.update(db, existing_menu, update_data)
+        # 转换为响应模型，处理children字段
+        menu_dict = menu_to_response(updated_menu)
+        menu_response = MenuResponse.model_validate(menu_dict)
+        return ApiResponse(code=200, message="菜单更新成功", data=menu_response)
     except HTTPException:
         raise
     except Exception as e:
@@ -217,7 +300,6 @@ def update_menu(
 @router.delete("/{menu_id}", response_model=ApiResponse)
 def delete_menu(
     menu_id: int,
-    current_user: User = Depends(get_current_user_dependency),
     db: Session = Depends(get_db)
 ):
     """删除菜单"""
@@ -226,13 +308,15 @@ def delete_menu(
         menu = menu_crud.get_or_404(db, menu_id, "菜单未找到")
         
         # 检查是否有子菜单
-        if menu.children:
-            raise HTTPException(status_code=400, detail="该菜单下有子菜单，无法删除")
+        children_count = db.query(menu_crud.model).filter(menu_crud.model.parent_id == menu_id).count()
+        if children_count > 0:
+            raise HTTPException(status_code=400, detail=f"该菜单下有 {children_count} 个子菜单，无法删除")
         
         # 删除菜单
-        menu_crud.delete(db, menu_id)
+        menu_crud.delete(db, menu)
         return ApiResponse(code=200, message="菜单删除成功")
     except HTTPException:
         raise
     except Exception as e:
+        print(f"删除菜单错误详情: {str(e)}")
         raise HTTPException(status_code=500, detail=f"删除菜单失败: {str(e)}")
