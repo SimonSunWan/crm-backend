@@ -30,5 +30,9 @@ class Menu(Base, TimestampMixin):
     auth_mark = Column(String(100), nullable=True, comment="权限标识")
     auth_sort = Column(Integer, default=1, comment="权限排序")
     
+    # 创建者和更新者
+    create_by = Column(String(255), nullable=True, comment="创建者")
+    update_by = Column(String(255), nullable=True, comment="更新者")
+    
     # 关系
     children = relationship("Menu", backref="parent", remote_side=[id])

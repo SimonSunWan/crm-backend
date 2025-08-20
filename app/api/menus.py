@@ -66,7 +66,7 @@ def get_menus(
             "size": size
         }
         
-        return ApiResponse(data=response_data)
+        return ApiResponse(code=200, message="操作成功", data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取菜单列表失败: {str(e)}")
 
@@ -77,7 +77,7 @@ def get_menu_tree(db: Session = Depends(get_db)):
     try:
         menus = menu_crud.get_all_menus(db)
         menu_responses = [MenuResponse.model_validate(menu) for menu in menus]
-        return ApiResponse(data=menu_responses)
+        return ApiResponse(code=200, message="操作成功", data=menu_responses)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取菜单树失败: {str(e)}")
 
@@ -93,7 +93,7 @@ def get_navigation_menus(
         user_roles = current_user.roles or []
         if not user_roles:
             # 如果没有角色，返回空菜单
-            return ApiResponse(data=[])
+            return ApiResponse(code=200, message="操作成功", data=[])
         
         # 获取所有启用的菜单
         menus = db.query(menu_crud.model).filter(
@@ -135,7 +135,7 @@ def get_navigation_menus(
         
         frontend_menus = [convert_to_frontend_format(menu) for menu in menu_tree]
         
-        return ApiResponse(data=frontend_menus)
+        return ApiResponse(code=200, message="操作成功", data=frontend_menus)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取导航菜单失败: {str(e)}")
 
@@ -161,7 +161,7 @@ def create_menu(
         menu_data["create_by"] = current_user.user_name
         
         created_menu = menu_crud.create(db, menu_data)
-        return ApiResponse(message="菜单创建成功", data=MenuResponse.model_validate(created_menu))
+        return ApiResponse(code=200, message="菜单创建成功", data=MenuResponse.model_validate(created_menu))
     except HTTPException:
         raise
     except Exception as e:
@@ -173,7 +173,7 @@ def get_menu(menu_id: int, db: Session = Depends(get_db)):
     """获取单个菜单"""
     try:
         menu = menu_crud.get_or_404(db, menu_id, "菜单未找到")
-        return ApiResponse(data=MenuResponse.model_validate(menu))
+        return ApiResponse(code=200, message="操作成功", data=MenuResponse.model_validate(menu))
     except HTTPException:
         raise
     except Exception as e:
@@ -207,7 +207,7 @@ def update_menu(
         update_data["update_by"] = current_user.user_name
         
         updated_menu = menu_crud.update(db, menu_id, update_data)
-        return ApiResponse(message="菜单更新成功", data=MenuResponse.model_validate(updated_menu))
+        return ApiResponse(code=200, message="菜单更新成功", data=MenuResponse.model_validate(updated_menu))
     except HTTPException:
         raise
     except Exception as e:
@@ -231,7 +231,7 @@ def delete_menu(
         
         # 删除菜单
         menu_crud.delete(db, menu_id)
-        return ApiResponse(message="菜单删除成功")
+        return ApiResponse(code=200, message="菜单删除成功")
     except HTTPException:
         raise
     except Exception as e:

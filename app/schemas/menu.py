@@ -28,7 +28,7 @@ class MenuBase(CamelCaseModel):
 
 class MenuCreate(MenuBase):
     """创建菜单模型"""
-    pass
+    create_by: Optional[str] = None
 
 
 class MenuUpdate(CamelCaseModel):
@@ -51,6 +51,7 @@ class MenuUpdate(CamelCaseModel):
     auth_name: Optional[str] = None
     auth_mark: Optional[str] = None
     auth_sort: Optional[int] = None
+    update_by: Optional[str] = None
 
 
 class MenuResponse(MenuBase):
