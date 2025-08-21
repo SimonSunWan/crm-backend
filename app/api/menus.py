@@ -13,6 +13,21 @@ router = APIRouter()
 
 def menu_to_response(menu) -> dict:
     """将Menu对象转换为MenuResponse字典，避免children字段验证问题"""
+    # 处理角色关系
+    roles_data = None
+    if menu.roles:
+        from app.schemas.menu import RoleResponseForMenu
+        roles_data = []
+        for role in menu.roles:
+            role_dict = {
+                "id": role.id,
+                "role_name": role.role_name,
+                "role_code": role.role_code,
+                "description": role.description,
+                "status": role.status
+            }
+            roles_data.append(RoleResponseForMenu.model_validate(role_dict))
+    
     return {
         "id": menu.id,
         "name": menu.name,
@@ -29,7 +44,7 @@ def menu_to_response(menu) -> dict:
         "is_enable": menu.is_enable,
         "menu_type": menu.menu_type,
         "parent_id": menu.parent_id,
-        "roles": menu.roles,
+        "roles": roles_data,
         "auth_name": menu.auth_name,
         "auth_mark": menu.auth_mark,
         "auth_sort": menu.auth_sort,
@@ -81,6 +96,8 @@ def get_menus(
                     menu_dict["children"] = children
                     menu_response = MenuResponse.model_validate(menu_dict)
                     tree.append(menu_response)
+            # 按sort字段从小到大排序
+            tree.sort(key=lambda x: x.sort)
             return tree
         
         # 构建完整的树形结构
@@ -171,16 +188,25 @@ def get_navigation_menus(
         
         # 过滤用户有权限的菜单
         authorized_menu_ids = set()
-        for menu in menus:
-            # 检查菜单是否与用户的角色关联
-            menu_has_permission = False
-            for user_role in current_user.roles:
-                if menu in user_role.menus:
-                    menu_has_permission = True
-                    break
-            
-            if menu_has_permission:
-                authorized_menu_ids.add(menu.id)
+        
+        # 检查是否为超级管理员
+        is_super_admin = "SUPER" in user_roles
+        
+        if is_super_admin:
+            # 超级管理员可以看到所有启用的菜单
+            authorized_menu_ids = {menu.id for menu in menus}
+        else:
+            # 普通用户根据角色权限过滤菜单
+            for menu in menus:
+                # 检查菜单是否与用户的角色关联
+                menu_has_permission = False
+                for user_role in current_user.roles:
+                    if menu in user_role.menus:
+                        menu_has_permission = True
+                        break
+                
+                if menu_has_permission:
+                    authorized_menu_ids.add(menu.id)
         
         # 构建树形结构，只包含有权限的菜单
         def build_authorized_tree(parent_id=None):
@@ -215,6 +241,8 @@ def get_navigation_menus(
                         "children": children
                     }
                     tree.append(menu_dict)
+            # 按sort字段从小到大排序
+            tree.sort(key=lambda x: x["meta"]["sort"])
             return tree
         
         frontend_menus = build_authorized_tree()
