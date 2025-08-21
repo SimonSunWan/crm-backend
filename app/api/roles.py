@@ -6,6 +6,7 @@ from app.schemas.role import RoleCreate, RoleResponse, RoleUpdate
 from app.schemas.base import ApiResponse
 from app.crud.role import role_crud
 from app.models.user import User
+from app.models.menu import Menu
 
 router = APIRouter()
 
@@ -35,8 +36,8 @@ def get_roles(
     try:
         skip = (current - 1) * size
         
-        # 构建查询
-        query = db.query(role_crud.model)
+        # 构建查询，过滤掉超级管理员角色
+        query = db.query(role_crud.model).filter(role_crud.model.role_code != "SUPER")
         
         # 如果提供了角色名称，添加过滤条件
         if role_name:
@@ -62,6 +63,24 @@ def get_roles(
         return ApiResponse(data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取角色列表失败: {str(e)}")
+
+
+@router.get("/all", response_model=ApiResponse)
+def get_all_roles(db: Session = Depends(get_db)):
+    """获取所有角色（不分页）"""
+    try:
+        # 获取所有启用的角色，过滤掉超级管理员
+        roles = db.query(role_crud.model).filter(
+            role_crud.model.status == True,
+            role_crud.model.role_code != "SUPER"
+        ).all()
+        
+        # 转换为响应模型
+        role_responses = [RoleResponse.model_validate(role) for role in roles]
+        
+        return ApiResponse(data=role_responses)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取所有角色失败: {str(e)}")
 
 
 @router.post("/", response_model=ApiResponse)
@@ -172,8 +191,20 @@ def get_role_menus(
     try:
         role = role_crud.get_or_404(db, role_id, "角色未找到")
         
-        # 获取角色关联的菜单ID列表
-        menu_ids = [menu.id for menu in role.menus]
+        # 获取角色关联的菜单ID列表（包括权限按钮）
+        menu_ids = []
+        for menu in role.menus:
+            menu_ids.append(menu.id)
+            # 如果菜单有权限按钮，也添加权限按钮的ID（使用前端期望的格式）
+            if menu.menu_type == "menu":
+                auth_buttons = db.query(Menu).filter(
+                    Menu.parent_id == menu.id,
+                    Menu.menu_type == "button"
+                ).all()
+                for auth_button in auth_buttons:
+                    # 使用前端期望的格式：menuId_authMark
+                    auth_id = f"{menu.id}_{auth_button.auth_mark}"
+                    menu_ids.append(auth_id)
         
         return ApiResponse(data={"menuIds": menu_ids})
     except HTTPException:
@@ -185,7 +216,7 @@ def get_role_menus(
 @router.post("/{role_id}/menus", response_model=ApiResponse)
 def update_role_menus(
     role_id: int,
-    menu_ids: list[int],
+    menu_data: dict,
     current_user: User = Depends(get_current_user_dependency),
     db: Session = Depends(get_db)
 ):
@@ -193,9 +224,33 @@ def update_role_menus(
     try:
         role = role_crud.get_or_404(db, role_id, "角色未找到")
         
-        # 获取所有菜单
-        from app.models.menu import Menu
-        menus = db.query(Menu).filter(Menu.id.in_(menu_ids)).all()
+        # 从请求数据中获取菜单ID列表
+        menu_ids = menu_data.get("menu_ids", [])
+        
+        # 处理菜单ID列表，包括权限按钮的ID映射
+        processed_menu_ids = []
+        for menu_id in menu_ids:
+            if isinstance(menu_id, str) and '_' in menu_id:
+                # 处理权限按钮ID格式：menuId_authMark
+                menu_id_str, auth_mark = menu_id.split('_', 1)
+                try:
+                    parent_menu_id = int(menu_id_str)
+                    # 查找对应的权限按钮
+                    auth_button = db.query(Menu).filter(
+                        Menu.parent_id == parent_menu_id,
+                        Menu.menu_type == "button",
+                        Menu.auth_mark == auth_mark
+                    ).first()
+                    if auth_button:
+                        processed_menu_ids.append(auth_button.id)
+                except ValueError:
+                    continue
+            else:
+                # 直接添加菜单ID
+                processed_menu_ids.append(menu_id)
+        
+        # 获取所有菜单和权限按钮
+        menus = db.query(Menu).filter(Menu.id.in_(processed_menu_ids)).all()
         
         # 清空当前角色的菜单权限
         role.menus.clear()

@@ -219,6 +219,22 @@ def get_navigation_menus(
                     # 获取菜单关联的角色
                     menu_roles = [role.role_code for role in menu.roles] if menu.roles else []
                     
+                    # 获取菜单的权限按钮列表
+                    auth_list = []
+                    if menu.menu_type == "menu":
+                        # 查找该菜单下的权限按钮
+                        auth_buttons = db.query(menu_crud.model).filter(
+                            menu_crud.model.parent_id == menu.id,
+                            menu_crud.model.menu_type == "button",
+                            menu_crud.model.is_enable == True
+                        ).all()
+                        
+                        for auth_button in auth_buttons:
+                            auth_list.append({
+                                "title": auth_button.auth_name or auth_button.title,
+                                "authMark": auth_button.auth_mark
+                            })
+                    
                     # 转换为字典格式
                     menu_dict = {
                         "id": menu.id,
@@ -236,7 +252,7 @@ def get_navigation_menus(
                             "link": menu.link,
                             "isEnable": menu.is_enable,
                             "roles": menu_roles,
-                            "authList": []  # 权限列表需要单独处理
+                            "authList": auth_list
                         },
                         "children": children
                     }

@@ -11,8 +11,8 @@ class UserBase(CamelCaseModel):
     phone: Optional[str] = None
     user_name: str
     nick_name: Optional[str] = None
-    status: str
-    roles: List[RoleResponse]
+    status: bool
+    roles: List[str]  # 角色编码数组
 
 
 class UserCreate(UserBase):
@@ -26,8 +26,8 @@ class UserUpdate(CamelCaseModel):
     phone: Optional[str] = None
     user_name: Optional[str] = None
     nick_name: Optional[str] = None
-    status: Optional[str] = None
-    roles: Optional[List[RoleResponse]] = None
+    status: Optional[bool] = None
+    roles: Optional[List[str]] = None  # 角色编码数组
 
 
 class UserResponse(UserBase):
@@ -39,6 +39,32 @@ class UserResponse(UserBase):
     update_time: Optional[datetime] = None
 
     model_config = {"exclude": {"hashed_password"}}
+
+    @classmethod
+    def model_validate(cls, obj):
+        """重写验证方法，处理角色数据转换"""
+        # 创建数据字典，避免直接修改原对象
+        data = {}
+        
+        # 复制基本字段
+        for field in ['id', 'email', 'phone', 'user_name', 'nick_name', 'create_by', 'create_time', 'update_by', 'update_time']:
+            if hasattr(obj, field):
+                data[field] = getattr(obj, field)
+        
+        # 处理角色数据
+        if hasattr(obj, 'roles'):
+            role_codes = [role.role_code for role in obj.roles] if obj.roles else []
+            data['roles'] = role_codes
+        else:
+            data['roles'] = []
+        
+        # 处理status字段：将字符串转换为布尔值
+        if hasattr(obj, 'status') and obj.status is not None:
+            data['status'] = obj.status == '1'
+        else:
+            data['status'] = True  # 默认值
+        
+        return super().model_validate(data)
 
 
 class UserLogin(CamelCaseModel):
