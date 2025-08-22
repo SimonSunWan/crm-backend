@@ -115,33 +115,52 @@ def change_current_user_password(
 
 
 @router.get("/", response_model=ApiResponse)
-def get_users(current: int = 1, size: int = 100, db: Session = Depends(get_db)):
+def get_users(
+    current: int = 1, 
+    size: int = 100, 
+    name: str = None,
+    phone: str = None,
+    email: str = None,
+    status: bool = None,
+    db: Session = Depends(get_db)
+):
     """获取用户列表"""
     try:
         skip = (current - 1) * size
+        
+        # 构建基础查询
+        query = db.query(User)
         
         # 过滤掉超级管理员用户（通过角色关联）
         from app.models.role import Role
         super_admin_role = db.query(Role).filter(Role.role_code == "SUPER").first()
         
         if super_admin_role:
-            # 获取所有不是超级管理员的用户，并预加载角色信息
-            users = db.query(User).filter(
-                ~User.roles.any(Role.id == super_admin_role.id)
-            ).options(
-                joinedload(User.roles)
-            ).offset(skip).limit(size).all()
-            
-            # 获取总数（排除超级管理员）
-            total = db.query(User).filter(
-                ~User.roles.any(Role.id == super_admin_role.id)
-            ).count()
-        else:
-            # 如果没有超级管理员角色，返回所有用户，并预加载角色信息
-            users = db.query(User).options(
-                joinedload(User.roles)
-            ).offset(skip).limit(size).all()
-            total = db.query(user_crud.model).count()
+            query = query.filter(~User.roles.any(Role.id == super_admin_role.id))
+        
+        # 添加筛选条件
+        if name:
+            query = query.filter(User.user_name.contains(name))
+        
+        if phone:
+            query = query.filter(User.phone.contains(phone))
+        
+        if email:
+            query = query.filter(User.email.contains(email))
+        
+        if status is not None:
+            # 将布尔值转换为字符串进行筛选
+            status_str = '1' if status else '2'
+            query = query.filter(User.status == status_str)
+        
+        # 预加载角色信息
+        query = query.options(joinedload(User.roles))
+        
+        # 获取总数
+        total = query.count()
+        
+        # 获取分页数据
+        users = query.offset(skip).limit(size).all()
         
         # 将SQLAlchemy模型转换为Pydantic模型
         user_responses = [UserResponse.model_validate(user) for user in users]

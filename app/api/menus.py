@@ -229,11 +229,26 @@ def get_navigation_menus(
                             menu_crud.model.is_enable == True
                         ).all()
                         
+                        # 检查当前用户角色是否拥有这些按钮的权限
                         for auth_button in auth_buttons:
-                            auth_list.append({
-                                "title": auth_button.auth_name or auth_button.title,
-                                "authMark": auth_button.auth_mark
-                            })
+                            # 检查权限按钮是否与用户角色关联
+                            button_has_permission = False
+                            if is_super_admin:
+                                # 超级管理员拥有所有权限
+                                button_has_permission = True
+                            else:
+                                # 检查普通用户角色是否拥有该按钮权限
+                                for user_role in current_user.roles:
+                                    if auth_button in user_role.menus:
+                                        button_has_permission = True
+                                        break
+                            
+                            # 只有拥有权限的按钮才添加到authList中
+                            if button_has_permission:
+                                auth_list.append({
+                                    "title": auth_button.auth_name or auth_button.title,
+                                    "authMark": auth_button.auth_mark
+                                })
                     
                     # 转换为字典格式
                     menu_dict = {

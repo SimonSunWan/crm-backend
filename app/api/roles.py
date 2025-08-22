@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -7,6 +7,7 @@ from app.schemas.base import ApiResponse
 from app.crud.role import role_crud
 from app.models.user import User
 from app.models.menu import Menu
+from app.models.role import Role
 
 router = APIRouter()
 
@@ -170,7 +171,7 @@ def delete_role(
         
         # 检查是否有用户使用该角色
         from app.models.user import User
-        users_with_role = db.query(User).filter(User.roles.any(role.role_code)).first()
+        users_with_role = db.query(User).filter(User.roles.any(Role.id == role.id)).first()
         if users_with_role:
             raise HTTPException(status_code=400, detail="该角色正在被用户使用，无法删除")
         
@@ -240,7 +241,7 @@ def get_role_menus(
 @router.post("/{role_id}/menus", response_model=ApiResponse)
 def update_role_menus(
     role_id: int,
-    menu_data: dict,
+    menu_data: dict = Body(...),
     current_user: User = Depends(get_current_user_dependency),
     db: Session = Depends(get_db)
 ):
