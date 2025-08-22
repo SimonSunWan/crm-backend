@@ -11,6 +11,7 @@ class UserBase(CamelCaseModel):
     phone: Optional[str] = None
     user_name: str
     nick_name: Optional[str] = None
+    avatar: Optional[str] = None  # 头像URL
     status: bool
     roles: List[str]  # 角色编码数组
 
@@ -26,6 +27,7 @@ class UserUpdate(CamelCaseModel):
     phone: Optional[str] = None
     user_name: Optional[str] = None
     nick_name: Optional[str] = None
+    avatar: Optional[str] = None  # 头像URL
     status: Optional[bool] = None
     roles: Optional[List[str]] = None  # 角色编码数组
 
@@ -47,7 +49,7 @@ class UserResponse(UserBase):
         data = {}
         
         # 复制基本字段
-        for field in ['id', 'email', 'phone', 'user_name', 'nick_name', 'create_by', 'create_time', 'update_by', 'update_time']:
+        for field in ['id', 'email', 'phone', 'user_name', 'nick_name', 'avatar', 'create_by', 'create_time', 'update_by', 'update_time']:
             if hasattr(obj, field):
                 data[field] = getattr(obj, field)
         

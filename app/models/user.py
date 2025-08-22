@@ -19,6 +19,7 @@ class User(Base, TimestampMixin):
     nick_name = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
+    avatar = Column(String, nullable=True)  # 头像URL
     hashed_password = Column(String, nullable=False)
     
     # 与角色的多对多关系
