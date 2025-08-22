@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Body
+from fastapi import APIRouter, Depends, HTTPException, Header, Body, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -30,7 +30,7 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
 def get_roles(
     current: int = 1, 
     size: int = 100, 
-    role_name: str = None,
+    role_name: str = Query(None, alias="roleName"),
     db: Session = Depends(get_db)
 ):
     """获取角色列表"""
@@ -52,7 +52,6 @@ def get_roles(
         
         # 转换为响应模型
         role_responses = [RoleResponse.model_validate(role) for role in roles]
-        
         # 返回包含分页信息的响应
         response_data = {
             "records": role_responses,
