@@ -191,22 +191,46 @@ def get_role_menus(
     try:
         role = role_crud.get_or_404(db, role_id, "角色未找到")
         
-        # 获取角色关联的菜单ID列表（包括权限按钮）
-        menu_ids = []
-        for menu in role.menus:
-            menu_ids.append(menu.id)
-            # 如果菜单有权限按钮，也添加权限按钮的ID（使用前端期望的格式）
-            if menu.menu_type == "menu":
-                auth_buttons = db.query(Menu).filter(
-                    Menu.parent_id == menu.id,
-                    Menu.menu_type == "button"
-                ).all()
-                for auth_button in auth_buttons:
-                    # 使用前端期望的格式：menuId_authMark
-                    auth_id = f"{menu.id}_{auth_button.auth_mark}"
-                    menu_ids.append(auth_id)
+        # 获取所有启用的菜单和权限按钮，按类型和排序分组
+        all_menus = db.query(Menu).filter(
+            Menu.is_enable == True
+        ).order_by(Menu.menu_type, Menu.sort).all()
         
-        return ApiResponse(data={"menuIds": menu_ids})
+        # 构建菜单树
+        def build_menu_tree(menus, parent_id=None):
+            tree = []
+            for menu in menus:
+                if menu.parent_id == parent_id:
+                    node = {
+                        "id": menu.id,
+                        "name": menu.name,
+                        "title": menu.title,
+                        "path": menu.path,
+                        "icon": menu.icon,
+                        "sort": menu.sort,
+                        "menuType": menu.menu_type,
+                        "authName": menu.auth_name,
+                        "authMark": menu.auth_mark,
+                        "authSort": menu.auth_sort,
+                        "isEnable": menu.is_enable,
+                        "children": build_menu_tree(menus, menu.id)
+                    }
+                    tree.append(node)
+            return tree
+        
+        menu_tree = build_menu_tree(all_menus)
+        
+        # 获取角色已选择的菜单和权限ID
+        selected_ids = []
+        if role.menus:
+            for menu in role.menus:
+                # 直接添加菜单或权限按钮的实际ID
+                selected_ids.append(menu.id)
+        
+        return ApiResponse(data={
+            "menuTree": menu_tree,
+            "selectedIds": selected_ids
+        })
     except HTTPException:
         raise
     except Exception as e:
@@ -225,32 +249,19 @@ def update_role_menus(
         role = role_crud.get_or_404(db, role_id, "角色未找到")
         
         # 从请求数据中获取菜单ID列表
-        menu_ids = menu_data.get("menu_ids", [])
+        menu_ids = menu_data.get("menuIds", [])
         
-        # 处理菜单ID列表，包括权限按钮的ID映射
-        processed_menu_ids = []
-        for menu_id in menu_ids:
-            if isinstance(menu_id, str) and '_' in menu_id:
-                # 处理权限按钮ID格式：menuId_authMark
-                menu_id_str, auth_mark = menu_id.split('_', 1)
-                try:
-                    parent_menu_id = int(menu_id_str)
-                    # 查找对应的权限按钮
-                    auth_button = db.query(Menu).filter(
-                        Menu.parent_id == parent_menu_id,
-                        Menu.menu_type == "button",
-                        Menu.auth_mark == auth_mark
-                    ).first()
-                    if auth_button:
-                        processed_menu_ids.append(auth_button.id)
-                except ValueError:
-                    continue
-            else:
-                # 直接添加菜单ID
-                processed_menu_ids.append(menu_id)
+        # 如果菜单ID列表为空，直接清空角色权限并返回
+        if not menu_ids:
+            role.menus.clear()
+            db.commit()
+            return ApiResponse(message="角色菜单权限已清空")
         
-        # 获取所有菜单和权限按钮
-        menus = db.query(Menu).filter(Menu.id.in_(processed_menu_ids)).all()
+        # 获取所有菜单和权限按钮，只获取启用的菜单
+        menus = db.query(Menu).filter(
+            Menu.id.in_(menu_ids),
+            Menu.is_enable == True  # 只获取启用的菜单
+        ).all()
         
         # 清空当前角色的菜单权限
         role.menus.clear()
@@ -265,3 +276,46 @@ def update_role_menus(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"更新角色菜单权限失败: {str(e)}")
+
+
+@router.post("/cleanup-orphaned-permissions", response_model=ApiResponse)
+def cleanup_orphaned_permissions(
+    current_user: User = Depends(get_current_user_dependency),
+    db: Session = Depends(get_db)
+):
+    """清理所有角色中已删除菜单的权限"""
+    try:
+        from app.models.role import Role
+        
+        # 获取所有角色
+        roles = db.query(Role).all()
+        cleaned_count = 0
+        
+        for role in roles:
+            # 过滤掉已删除的菜单
+            valid_menus = []
+            for menu in role.menus:
+                # 检查菜单是否仍然存在于数据库中且是启用的
+                existing_menu = db.query(Menu).filter(
+                    Menu.id == menu.id,
+                    Menu.is_enable == True
+                ).first()
+                
+                if existing_menu:
+                    valid_menus.append(menu)
+                else:
+                    cleaned_count += 1
+            
+            # 更新角色的菜单权限
+            if len(valid_menus) != len(role.menus):
+                role.menus = valid_menus
+        
+        db.commit()
+        
+        return ApiResponse(
+            message=f"权限清理完成，共清理了 {cleaned_count} 个无效权限",
+            data={"cleanedCount": cleaned_count}
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"清理无效权限失败: {str(e)}")

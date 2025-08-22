@@ -379,11 +379,27 @@ def delete_menu(
         if children_count > 0:
             raise HTTPException(status_code=400, detail=f"该菜单下有 {children_count} 个子菜单，无法删除")
         
+        # 在删除菜单之前，清理相关角色的权限
+        from app.models.role import Role
+        from app.models.role_menu import role_menu
+        
+        # 查找所有关联了该菜单的角色
+        roles_with_menu = db.query(Role).join(role_menu).filter(role_menu.c.menu_id == menu_id).all()
+        
+        # 从这些角色中移除该菜单的权限
+        for role in roles_with_menu:
+            role.menus = [m for m in role.menus if m.id != menu_id]
+        
         # 删除菜单
         menu_crud.delete(db, menu)
+        
+        # 提交事务
+        db.commit()
+        
         return ApiResponse(code=200, message="菜单删除成功")
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         print(f"删除菜单错误详情: {str(e)}")
         raise HTTPException(status_code=500, detail=f"删除菜单失败: {str(e)}")
