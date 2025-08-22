@@ -83,12 +83,24 @@ def init_menus():
                 "roles": "SUPER"
             },
             {
+                "name": "UserCenter",
+                "path": "user-center",
+                "component": "UserCenter",
+                "title": "个人中心",
+                "icon": "",
+                "sort": 3,
+                "menu_type": "menu",
+                "parent_id": 3,  # System的子菜单
+                "is_hide": False,
+                "roles": "SUPER"
+            },
+            {
                 "name": "Menus",
                 "path": "menu",
                 "component": "Menu",
                 "title": "菜单管理",
                 "icon": "",
-                "sort": 3,
+                "sort": 4,
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
                 "roles": "SUPER"
@@ -99,7 +111,7 @@ def init_menus():
                 "component": "Dictionary",
                 "title": "字典管理",
                 "icon": "",
-                "sort": 4,
+                "sort": 5,
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
                 "roles": "SUPER"
@@ -124,7 +136,7 @@ def init_menus():
                 "icon": "",
                 "sort": 1,
                 "menu_type": "menu",
-                "parent_id": 8,  # Customer的子菜单
+                "parent_id": 9,  # Customer的子菜单
                 "roles": "SUPER"
             }
         ]

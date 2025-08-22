@@ -1,13 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, get_password_hash, verify_password
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.schemas.base import ApiResponse
 from app.crud.user import user_crud
 from app.models.user import User
+from pydantic import BaseModel
 
 router = APIRouter()
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 
 def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
@@ -32,6 +38,80 @@ def get_current_user_info(current_user: User = Depends(get_current_user_dependen
         return ApiResponse(data=UserResponse.model_validate(current_user))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取用户信息失败: {str(e)}")
+
+
+@router.put("/me", response_model=ApiResponse)
+def update_current_user_info(
+    user_update: UserUpdate, 
+    current_user: User = Depends(get_current_user_dependency),
+    db: Session = Depends(get_db)
+):
+    """更新当前登录用户的个人信息"""
+    try:
+        # 处理角色数据
+        update_data = user_update.model_dump(exclude_unset=True)
+        role_codes = update_data.pop('roles', None)
+        
+        # 不允许通过此接口修改角色
+        if role_codes is not None:
+            raise HTTPException(status_code=400, detail="不允许通过此接口修改角色")
+        
+        # 检查邮箱唯一性（排除当前用户）
+        if 'email' in update_data:
+            existing_user = db.query(User).filter(
+                User.email == update_data['email'],
+                User.id != current_user.id
+            ).first()
+            if existing_user:
+                raise HTTPException(status_code=400, detail="邮箱已存在")
+        
+        # 检查用户名唯一性（排除当前用户）
+        if 'user_name' in update_data:
+            existing_username = db.query(User).filter(
+                User.user_name == update_data['user_name'],
+                User.id != current_user.id
+            ).first()
+            if existing_username:
+                raise HTTPException(status_code=400, detail="用户名已存在")
+        
+        # 处理status字段：将布尔值转换为字符串
+        if 'status' in update_data:
+            update_data['status'] = '1' if update_data['status'] else '2'
+        
+        # 更新用户基本信息
+        updated_user = user_crud.update(db, current_user, update_data)
+        
+        return ApiResponse(message="用户信息更新成功", data=UserResponse.model_validate(updated_user))
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"更新用户信息失败: {str(e)}")
+
+
+@router.put("/me/change-password", response_model=ApiResponse)
+def change_current_user_password(
+    password_request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user_dependency),
+    db: Session = Depends(get_db)
+):
+    """修改当前登录用户的密码"""
+    try:
+        # 验证当前密码
+        if not verify_password(password_request.current_password, current_user.hashed_password):
+            raise HTTPException(status_code=400, detail="当前密码错误")
+        
+        # 更新密码
+        current_user.hashed_password = get_password_hash(password_request.new_password)
+        db.add(current_user)
+        db.commit()
+        
+        return ApiResponse(message="密码修改成功")
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"修改密码失败: {str(e)}")
 
 
 @router.get("/", response_model=ApiResponse)
@@ -199,7 +279,5 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
         user = user_crud.get_or_404(db, user_id, "用户未找到")
         user_crud.delete(db, user)
         return ApiResponse(message="用户删除成功")
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除用户失败: {str(e)}")
