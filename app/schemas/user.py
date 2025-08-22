@@ -39,6 +39,7 @@ class UserResponse(UserBase):
     create_time: Optional[datetime] = None
     update_by: Optional[str] = None
     update_time: Optional[datetime] = None
+    role_names: Optional[List[str]] = None  # 角色名称数组
 
     model_config = {"exclude": {"hashed_password"}}
 
@@ -56,9 +57,12 @@ class UserResponse(UserBase):
         # 处理角色数据
         if hasattr(obj, 'roles'):
             role_codes = [role.role_code for role in obj.roles] if obj.roles else []
+            role_names = [role.role_name for role in obj.roles] if obj.roles else []
             data['roles'] = role_codes
+            data['role_names'] = role_names
         else:
             data['roles'] = []
+            data['role_names'] = []
         
         # 处理status字段：将字符串转换为布尔值
         if hasattr(obj, 'status') and obj.status is not None:

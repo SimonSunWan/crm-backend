@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.core.auth import get_current_user, get_password_hash, verify_password
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
@@ -125,9 +125,11 @@ def get_users(current: int = 1, size: int = 100, db: Session = Depends(get_db)):
         super_admin_role = db.query(Role).filter(Role.role_code == "SUPER").first()
         
         if super_admin_role:
-            # 获取所有不是超级管理员的用户
+            # 获取所有不是超级管理员的用户，并预加载角色信息
             users = db.query(User).filter(
                 ~User.roles.any(Role.id == super_admin_role.id)
+            ).options(
+                joinedload(User.roles)
             ).offset(skip).limit(size).all()
             
             # 获取总数（排除超级管理员）
@@ -135,8 +137,10 @@ def get_users(current: int = 1, size: int = 100, db: Session = Depends(get_db)):
                 ~User.roles.any(Role.id == super_admin_role.id)
             ).count()
         else:
-            # 如果没有超级管理员角色，返回所有用户
-            users = user_crud.get_multi(db, skip=skip, limit=size)
+            # 如果没有超级管理员角色，返回所有用户，并预加载角色信息
+            users = db.query(User).options(
+                joinedload(User.roles)
+            ).offset(skip).limit(size).all()
             total = db.query(user_crud.model).count()
         
         # 将SQLAlchemy模型转换为Pydantic模型
