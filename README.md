@@ -1,6 +1,6 @@
 # crm-backend
 
-一个基于FastAPI的CRM后端系统。
+基于 FastAPI 的 CRM 后端系统。
 
 ## 特性
 
