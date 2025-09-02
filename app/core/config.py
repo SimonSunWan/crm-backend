@@ -5,9 +5,9 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
 
-    PROJECT_NAME: str = "CRM Backend"
+    PROJECT_NAME: str = "crm-backend"
     VERSION: str = "1.0.0"
-    DESCRIPTION: str = "CRM系统后端API"
+    DESCRIPTION: str = "CRM后端系统"
     API_PRE_STR: str = "/api"
 
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
