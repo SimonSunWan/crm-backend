@@ -3,17 +3,16 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.core.auth import get_current_user, get_password_hash, verify_password
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
-from app.schemas.base import ApiResponse
+from app.schemas.base import ApiResponse, CamelCaseModel
 from app.crud.user import user_crud
 from app.models.user import User
-from pydantic import BaseModel
 
 router = APIRouter()
 
 
-class ChangePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str
+class ChangePasswordRequest(CamelCaseModel):
+    currentPassword: str
+    newPassword: str
 
 
 def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
@@ -98,11 +97,11 @@ def change_current_user_password(
     """修改当前登录用户的密码"""
     try:
         # 验证当前密码
-        if not verify_password(password_request.current_password, current_user.hashed_password):
+        if not verify_password(password_request.currentPassword, current_user.hashed_password):
             raise HTTPException(status_code=400, detail="当前密码错误")
         
         # 更新密码
-        current_user.hashed_password = get_password_hash(password_request.new_password)
+        current_user.hashed_password = get_password_hash(password_request.newPassword)
         db.add(current_user)
         db.commit()
         
