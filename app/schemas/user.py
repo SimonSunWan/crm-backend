@@ -7,7 +7,7 @@ from app.schemas.role import RoleResponse
 
 class UserBase(CamelCaseModel):
 
-    email: EmailStr
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     user_name: str
     nick_name: Optional[str] = None
@@ -76,6 +76,21 @@ class UserResponse(UserBase):
 class UserLogin(CamelCaseModel):
     user_name: str
     password: str
+
+
+class UserRegister(CamelCaseModel):
+    user_name: str
+    nick_name: str
+    phone: str
+    email: Optional[str] = None
+    password: str
+    system_code: str
+
+
+class UserForgetPassword(CamelCaseModel):
+    username: str
+    new_password: str
+    system_code: str
 
 
 class LoginResponse(ApiResponse):

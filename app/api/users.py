@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.core.auth import get_current_user, get_password_hash, verify_password
-from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.schemas.user import UserCreate, UserResponse, UserUpdate, UserRegister, UserForgetPassword
 from app.schemas.base import ApiResponse, CamelCaseModel
 from app.crud.user import user_crud
 from app.models.user import User
@@ -26,7 +26,7 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
         raise HTTPException(status_code=401, detail="无效的token或用户不存在")
     # 检查用户状态：'1'表示启用，'2'表示禁用
     if user.status != '1':
-        raise HTTPException(status_code=400, detail="用户已被禁用")
+        raise HTTPException(status_code=400, detail="用户未启用")
     return user
 
 
@@ -177,14 +177,64 @@ def get_users(
         raise HTTPException(status_code=500, detail=f"获取用户列表失败: {str(e)}")
 
 
+@router.post("/register", response_model=ApiResponse)
+def register_user(user: UserRegister, db: Session = Depends(get_db)):
+    """用户注册"""
+    try:
+        # 校验系统码
+        from app.crud.system_setting import system_setting_crud
+        system_code_setting = system_setting_crud.get_by_key(db, setting_key="REGISTER_SYSTEM_CODE")
+        if not system_code_setting or system_code_setting.setting_value != user.system_code:
+            raise HTTPException(status_code=400, detail="系统码错误")
+        
+        # 检查用户名是否已存在
+        existing_username = db.query(User).filter(User.user_name == user.user_name).first()
+        if existing_username:
+            raise HTTPException(status_code=400, detail="用户名已存在")
+        
+        # 检查手机号是否已存在
+        if user.phone:
+            existing_phone = db.query(User).filter(User.phone == user.phone).first()
+            if existing_phone:
+                raise HTTPException(status_code=400, detail="手机号已存在")
+        
+        # 检查邮箱是否已存在（如果提供了邮箱）
+        if user.email:
+            existing_email = db.query(User).filter(User.email == user.email).first()
+            if existing_email:
+                raise HTTPException(status_code=400, detail="邮箱已存在")
+        
+        # 准备用户数据
+        user_data = {
+            'user_name': user.user_name,
+            'nick_name': user.nick_name,
+            'phone': user.phone,
+            'email': user.email,
+            'password': user.password,
+            'status': '2',  # 默认未开启状态
+            'roles': []  # 角色为空
+        }
+        
+        # 创建用户
+        created_user = user_crud.create(db, user_data)
+        
+        return ApiResponse(message="注册成功，请等待管理员审核", data=UserResponse.model_validate(created_user))
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"注册失败: {str(e)}")
+
+
 @router.post("/", response_model=ApiResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """创建用户"""
     try:
-        # 检查邮箱是否已存在
-        existing_user = db.query(User).filter(User.email == user.email).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="邮箱已存在")
+        # 检查邮箱是否已存在（如果提供了邮箱）
+        if user.email:
+            existing_user = db.query(User).filter(User.email == user.email).first()
+            if existing_user:
+                raise HTTPException(status_code=400, detail="邮箱已存在")
         
         # 检查用户名是否已存在
         existing_username = db.query(User).filter(User.user_name == user.user_name).first()
@@ -303,3 +353,31 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
         return ApiResponse(message="用户删除成功")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除用户失败: {str(e)}")
+
+
+@router.post("/forget-password", response_model=ApiResponse)
+def forget_password(data: UserForgetPassword, db: Session = Depends(get_db)):
+    """忘记密码重置"""
+    try:
+        # 校验系统码
+        from app.crud.system_setting import system_setting_crud
+        system_code_setting = system_setting_crud.get_by_key(db, setting_key="REGISTER_SYSTEM_CODE")
+        if not system_code_setting or system_code_setting.setting_value != data.system_code:
+            raise HTTPException(status_code=400, detail="系统码错误")
+        
+        # 查找用户
+        user = db.query(User).filter(User.user_name == data.username).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="用户不存在")
+        
+        # 更新密码
+        user.hashed_password = get_password_hash(data.new_password)
+        db.commit()
+        db.refresh(user)
+        
+        return ApiResponse(message="密码重置成功")
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"密码重置失败: {str(e)}")

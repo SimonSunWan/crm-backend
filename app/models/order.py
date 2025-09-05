@@ -11,6 +11,8 @@ class InternalOrder(Base, TimestampMixin):
     
     id = Column(String, primary_key=True, index=True)
     customer = Column(String, nullable=False)
+    vehicle_model = Column(String, nullable=False)
+    repair_shop = Column(String, nullable=False)
     reporter_name = Column(String, nullable=False)
     contact_info = Column(String, nullable=False)
     report_date = Column(Date, nullable=False)
@@ -34,6 +36,8 @@ class ExternalOrder(Base, TimestampMixin):
     
     id = Column(String, primary_key=True, index=True)
     customer = Column(String, nullable=False)
+    vehicle_model = Column(String, nullable=False)
+    repair_shop = Column(String, nullable=False)
     reporter_name = Column(String, nullable=False)
     contact_info = Column(String, nullable=False)
     report_date = Column(Date, nullable=False)

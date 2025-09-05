@@ -20,7 +20,7 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     if not user.status:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="用户已被禁用"
+            detail="用户未启用"
         )
     
     access_token = create_access_token(data={"sub": str(user.id)})

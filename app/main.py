@@ -26,6 +26,11 @@ async def lifespan(app: FastAPI):
         from init_roles import init_roles
         init_roles()
         
+        # 启动系统码生成器
+        import asyncio
+        from system_code_generator import system_code_scheduler
+        asyncio.create_task(system_code_scheduler())
+        
         # 检查是否已存在超级管理员
         existing_admin = db.query(user_crud.model).filter(
             user_crud.model.user_name == "Super"

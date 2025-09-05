@@ -1,0 +1,19 @@
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from app.core.database import Base
+from app.models.base import TimestampMixin
+
+
+class SystemSetting(Base, TimestampMixin):
+    """系统配置表"""
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    create_by = Column(String, nullable=True)
+    create_time = Column(DateTime, nullable=True)
+    update_by = Column(String, nullable=True)
+    update_time = Column(DateTime, nullable=True)
+    status = Column(Boolean, default=True)
+    setting_key = Column(String, unique=True, index=True, nullable=False, comment="配置键")
+    setting_value = Column(String, nullable=False, comment="配置值")
+    setting_name = Column(String, nullable=False, comment="配置名称")
+    setting_desc = Column(String, nullable=True, comment="配置描述")

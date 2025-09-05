@@ -7,6 +7,8 @@ from app.schemas.base import CamelCaseModel
 class OrderBase(CamelCaseModel):
     """工单基础模型"""
     customer: str
+    vehicle_model: str
+    repair_shop: str
     reporter_name: str
     contact_info: str
     report_date: date
@@ -35,6 +37,8 @@ class ExternalOrderCreate(OrderBase):
 class InternalOrderUpdate(CamelCaseModel):
     """保内工单更新模型"""
     customer: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    repair_shop: Optional[str] = None
     reporter_name: Optional[str] = None
     contact_info: Optional[str] = None
     report_date: Optional[date] = None
@@ -54,6 +58,8 @@ class InternalOrderUpdate(CamelCaseModel):
 class ExternalOrderUpdate(CamelCaseModel):
     """保外工单更新模型"""
     customer: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    repair_shop: Optional[str] = None
     reporter_name: Optional[str] = None
     contact_info: Optional[str] = None
     report_date: Optional[date] = None
@@ -74,6 +80,8 @@ class InternalOrderResponse(CamelCaseModel):
     """保内工单响应模型"""
     id: str
     customer: str
+    vehicle_model: str
+    repair_shop: str
     reporter_name: str
     contact_info: str
     report_date: date
@@ -96,6 +104,8 @@ class ExternalOrderResponse(CamelCaseModel):
     """保外工单响应模型"""
     id: str
     customer: str
+    vehicle_model: str
+    repair_shop: str
     reporter_name: str
     contact_info: str
     report_date: date

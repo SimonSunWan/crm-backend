@@ -16,12 +16,64 @@ router = APIRouter()
 
 
 @router.get("/internal/", response_model=ApiResponse)
-def get_internal_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_internal_orders(
+    current: int = 1, 
+    size: int = 20,
+    orderNo: str = None,
+    customer: str = None,
+    vehicleModel: str = None,
+    repairShop: str = None,
+    reporterName: str = None,
+    dateRange: list = None,
+    db: Session = Depends(get_db)
+):
     """获取保内工单列表"""
     try:
-        orders = internal_order_crud.get_multi(db, skip=skip, limit=limit)
+        skip = (current - 1) * size
+        
+        # 构建基础查询
+        query = db.query(internal_order_crud.model)
+        
+        # 添加筛选条件
+        if orderNo:
+            query = query.filter(internal_order_crud.model.id.contains(orderNo))
+        
+        if customer:
+            query = query.filter(internal_order_crud.model.customer.contains(customer))
+        
+        if vehicleModel:
+            query = query.filter(internal_order_crud.model.vehicle_model.contains(vehicleModel))
+        
+        if repairShop:
+            query = query.filter(internal_order_crud.model.repair_shop.contains(repairShop))
+        
+        if reporterName:
+            query = query.filter(internal_order_crud.model.reporter_name.contains(reporterName))
+        
+        if dateRange and len(dateRange) == 2:
+            start_date, end_date = dateRange
+            if start_date and end_date:
+                query = query.filter(
+                    internal_order_crud.model.report_date >= start_date,
+                    internal_order_crud.model.report_date <= end_date
+                )
+        
+        # 获取总数
+        total = query.count()
+        
+        # 获取分页数据
+        orders = query.offset(skip).limit(size).all()
         order_responses = [InternalOrderResponse.model_validate(order) for order in orders]
-        return ApiResponse(data=order_responses)
+        
+        # 返回包含分页信息的响应
+        response_data = {
+            "records": order_responses,
+            "total": total,
+            "current": current,
+            "size": size
+        }
+        
+        return ApiResponse(data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取保内工单列表失败: {str(e)}")
 
@@ -46,8 +98,6 @@ def get_internal_order(order_id: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="保内工单未找到")
         order_response = InternalOrderResponse.model_validate(order)
         return ApiResponse(data=order_response)
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取保内工单失败: {str(e)}")
 
@@ -62,8 +112,6 @@ def update_internal_order(order_id: str, order_update: InternalOrderUpdate, db: 
         updated_order = internal_order_crud.update(db, order, order_update.model_dump(exclude_unset=True))
         order_response = InternalOrderResponse.model_validate(updated_order)
         return ApiResponse(message="保内工单更新成功", data=order_response)
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"更新保内工单失败: {str(e)}")
 
@@ -77,19 +125,69 @@ def delete_internal_order(order_id: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="保内工单未找到")
         internal_order_crud.delete(db, order)
         return ApiResponse(message="保内工单删除成功")
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除保内工单失败: {str(e)}")
 
 
 @router.get("/external/", response_model=ApiResponse)
-def get_external_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def get_external_orders(
+    current: int = 1, 
+    size: int = 20,
+    orderNo: str = None,
+    customer: str = None,
+    vehicleModel: str = None,
+    repairShop: str = None,
+    reporterName: str = None,
+    dateRange: list = None,
+    db: Session = Depends(get_db)
+):
     """获取保外工单列表"""
     try:
-        orders = external_order_crud.get_multi(db, skip=skip, limit=limit)
+        skip = (current - 1) * size
+        
+        # 构建基础查询
+        query = db.query(external_order_crud.model)
+        
+        # 添加筛选条件
+        if orderNo:
+            query = query.filter(external_order_crud.model.id.contains(orderNo))
+        
+        if customer:
+            query = query.filter(external_order_crud.model.customer.contains(customer))
+        
+        if vehicleModel:
+            query = query.filter(external_order_crud.model.vehicle_model.contains(vehicleModel))
+        
+        if repairShop:
+            query = query.filter(external_order_crud.model.repair_shop.contains(repairShop))
+        
+        if reporterName:
+            query = query.filter(external_order_crud.model.reporter_name.contains(reporterName))
+        
+        if dateRange and len(dateRange) == 2:
+            start_date, end_date = dateRange
+            if start_date and end_date:
+                query = query.filter(
+                    external_order_crud.model.report_date >= start_date,
+                    external_order_crud.model.report_date <= end_date
+                )
+        
+        # 获取总数
+        total = query.count()
+        
+        # 获取分页数据
+        orders = query.offset(skip).limit(size).all()
         order_responses = [ExternalOrderResponse.model_validate(order) for order in orders]
-        return ApiResponse(data=order_responses)
+        
+        # 返回包含分页信息的响应
+        response_data = {
+            "records": order_responses,
+            "total": total,
+            "current": current,
+            "size": size
+        }
+        
+        return ApiResponse(data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取保外工单列表失败: {str(e)}")
 
@@ -114,8 +212,6 @@ def get_external_order(order_id: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="保外工单未找到")
         order_response = ExternalOrderResponse.model_validate(order)
         return ApiResponse(data=order_response)
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取保外工单失败: {str(e)}")
 
@@ -130,8 +226,6 @@ def update_external_order(order_id: str, order_update: ExternalOrderUpdate, db: 
         updated_order = external_order_crud.update(db, order, order_update.model_dump(exclude_unset=True))
         order_response = ExternalOrderResponse.model_validate(updated_order)
         return ApiResponse(message="保外工单更新成功", data=order_response)
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"更新保外工单失败: {str(e)}")
 
@@ -145,7 +239,5 @@ def delete_external_order(order_id: str, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="保外工单未找到")
         external_order_crud.delete(db, order)
         return ApiResponse(message="保外工单删除成功")
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除保外工单失败: {str(e)}")
