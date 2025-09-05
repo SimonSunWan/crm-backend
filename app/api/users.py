@@ -51,12 +51,16 @@ def update_current_user_info(
         update_data = user_update.model_dump(exclude_unset=True)
         role_codes = update_data.pop('roles', None)
         
+        # 将空字符串转换为None，避免唯一约束冲突
+        if 'email' in update_data and update_data['email'] == '':
+            update_data['email'] = None
+        
         # 不允许通过此接口修改角色
         if role_codes is not None:
             raise HTTPException(status_code=400, detail="不允许通过此接口修改角色")
         
         # 检查邮箱唯一性（排除当前用户）
-        if 'email' in update_data:
+        if 'email' in update_data and update_data['email']:
             existing_user = db.query(User).filter(
                 User.email == update_data['email'],
                 User.id != current_user.id
@@ -117,9 +121,11 @@ def change_current_user_password(
 def get_users(
     current: int = 1, 
     size: int = 100, 
-    name: str = None,
+    userName: str = None,
+    nickName: str = None,
     phone: str = None,
     email: str = None,
+    roleCode: str = None,
     status: bool = None,
     db: Session = Depends(get_db)
 ):
@@ -138,14 +144,24 @@ def get_users(
             query = query.filter(~User.roles.any(Role.id == super_admin_role.id))
         
         # 添加筛选条件
-        if name:
-            query = query.filter(User.user_name.contains(name))
+        if userName:
+            query = query.filter(User.user_name == userName)
+        
+        if nickName:
+            query = query.filter(User.nick_name.ilike(f'%{nickName}%'))
         
         if phone:
             query = query.filter(User.phone.contains(phone))
         
         if email:
             query = query.filter(User.email.contains(email))
+        
+        if roleCode:
+            # 通过角色关联筛选用户
+            from app.models.role import Role
+            role = db.query(Role).filter(Role.role_code == roleCode).first()
+            if role:
+                query = query.filter(User.roles.any(Role.id == role.id))
         
         if status is not None:
             # 将布尔值转换为字符串进行筛选
@@ -245,6 +261,10 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         user_data = user.model_dump()
         role_codes = user_data.pop('roles', []) if isinstance(user_data.get('roles'), list) else []
         
+        # 将空字符串转换为None，避免唯一约束冲突
+        if 'email' in user_data and user_data['email'] == '':
+            user_data['email'] = None
+        
         # 检查是否尝试创建超级管理员用户
         if 'SUPER' in role_codes:
             raise HTTPException(status_code=400, detail="不允许创建超级管理员用户")
@@ -295,12 +315,16 @@ def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get
         update_data = user_update.model_dump(exclude_unset=True)
         role_codes = update_data.pop('roles', None)
         
+        # 将空字符串转换为None，避免唯一约束冲突
+        if 'email' in update_data and update_data['email'] == '':
+            update_data['email'] = None
+        
         # 检查是否尝试将用户升级为超级管理员
         if role_codes and 'SUPER' in role_codes:
             raise HTTPException(status_code=400, detail="不允许将用户升级为超级管理员")
         
         # 检查邮箱唯一性（排除当前用户）
-        if 'email' in update_data:
+        if 'email' in update_data and update_data['email']:
             existing_user = db.query(User).filter(
                 User.email == update_data['email'],
                 User.id != user_id

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional, Any, List
 from datetime import datetime
 from app.schemas.base import ApiResponse, Token, CamelCaseModel
@@ -7,7 +7,7 @@ from app.schemas.role import RoleResponse
 
 class UserBase(CamelCaseModel):
 
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     user_name: str
     nick_name: Optional[str] = None
@@ -23,7 +23,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(CamelCaseModel):
 
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     user_name: Optional[str] = None
     nick_name: Optional[str] = None
