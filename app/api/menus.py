@@ -32,22 +32,17 @@ def menu_to_response(menu) -> dict:
         "id": menu.id,
         "name": menu.name,
         "path": menu.path,
-        "component": menu.component,
-        "redirect": menu.redirect,
-        "title": menu.title,
         "icon": menu.icon,
         "sort": menu.sort,
         "is_hide": menu.is_hide,
         "is_keep_alive": menu.is_keep_alive,
-        "is_iframe": menu.is_iframe,
+        "is_link": menu.is_link,
         "link": menu.link,
         "is_enable": menu.is_enable,
         "menu_type": menu.menu_type,
         "parent_id": menu.parent_id,
         "roles": roles_data,
-        "auth_name": menu.auth_name,
         "auth_mark": menu.auth_mark,
-        "auth_sort": menu.auth_sort,
         "create_by": menu.create_by,
         "create_time": menu.create_time,
         "update_by": menu.update_by,
@@ -72,8 +67,6 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
 
 @router.get("/", response_model=ApiResponse)
 def get_menus(
-    current: int = 1, 
-    size: int = 100, 
     name: Optional[str] = None,
     path: Optional[str] = None,
     menu_type: Optional[str] = None,
@@ -110,7 +103,7 @@ def get_menus(
                 for menu in tree:
                     # 检查当前菜单是否匹配过滤条件
                     matches = True
-                    if name_filter and name_filter.lower() not in menu.title.lower():
+                    if name_filter and name_filter.lower() not in menu.name.lower():
                         matches = False
                     if path_filter and path_filter.lower() not in (menu.path or "").lower():
                         matches = False
@@ -128,25 +121,7 @@ def get_menus(
             
             menu_tree = filter_tree(menu_tree, name, path, menu_type)
         
-        # 计算总数（包括所有层级的菜单）
-        def count_total(tree):
-            total = 0
-            for menu in tree:
-                total += 1
-                total += count_total(menu.children)
-            return total
-        
-        total_count = count_total(menu_tree)
-        
-        # 返回树形结构数据
-        response_data = {
-            "records": menu_tree,
-            "total": total_count,
-            "current": current,
-            "size": size
-        }
-        
-        return ApiResponse(code=200, message="操作成功", data=response_data)
+        return ApiResponse(code=200, message="操作成功", data=menu_tree)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取菜单列表失败: {str(e)}")
 
@@ -246,7 +221,7 @@ def get_navigation_menus(
                             # 只有拥有权限的按钮才添加到authList中
                             if button_has_permission:
                                 auth_list.append({
-                                    "title": auth_button.auth_name or auth_button.title,
+                                    "title": auth_button.name,
                                     "authMark": auth_button.auth_mark
                                 })
                     
@@ -255,15 +230,13 @@ def get_navigation_menus(
                         "id": menu.id,
                         "name": menu.name,
                         "path": menu.path,
-                        "component": menu.component,
-                        "redirect": menu.redirect,
                         "meta": {
-                            "title": menu.title,
+                            "title": menu.name,
                             "icon": menu.icon,
                             "sort": menu.sort,
                             "isHide": menu.is_hide,
                             "keepAlive": menu.is_keep_alive,
-                            "isIframe": menu.is_iframe,
+                            "isLink": menu.is_link,
                             "link": menu.link,
                             "isEnable": menu.is_enable,
                             "roles": menu_roles,
