@@ -62,6 +62,13 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
         raise HTTPException(status_code=401, detail="无效的token或用户不存在")
     if not user.status:
         raise HTTPException(status_code=400, detail="用户未启用")
+    
+    # 检查用户是否有启用的角色
+    if user.roles:
+        enabled_roles = [role for role in user.roles if role.status]
+        if not enabled_roles:
+            raise HTTPException(status_code=403, detail="您的所有角色已被禁用，无法访问系统")
+    
     return user
 
 
@@ -149,10 +156,11 @@ def get_navigation_menus(
 ):
     """获取导航菜单（用于左侧菜单和动态路由）"""
     try:
-        # 根据用户角色获取菜单
-        user_roles = [role.role_code for role in current_user.roles] if current_user.roles else []
+        # 根据用户启用的角色获取菜单
+        enabled_roles = [role for role in current_user.roles if role.status] if current_user.roles else []
+        user_roles = [role.role_code for role in enabled_roles]
         if not user_roles:
-            # 如果没有角色，返回空菜单
+            # 如果没有启用的角色，返回空菜单
             return ApiResponse(code=200, message="操作成功", data=[])
         
         # 获取所有启用的菜单
@@ -171,12 +179,12 @@ def get_navigation_menus(
             # 超级管理员可以看到所有启用的菜单
             authorized_menu_ids = {menu.id for menu in menus}
         else:
-            # 普通用户根据角色权限过滤菜单
+            # 普通用户根据启用角色权限过滤菜单
             for menu in menus:
-                # 检查菜单是否与用户的角色关联
+                # 检查菜单是否与用户的启用角色关联
                 menu_has_permission = False
-                for user_role in current_user.roles:
-                    if menu in user_role.menus:
+                for enabled_role in enabled_roles:
+                    if menu in enabled_role.menus:
                         menu_has_permission = True
                         break
                 
@@ -206,17 +214,17 @@ def get_navigation_menus(
                             menu_crud.model.is_enable == True
                         ).all()
                         
-                        # 检查当前用户角色是否拥有这些按钮的权限
+                        # 检查当前用户启用角色是否拥有这些按钮的权限
                         for auth_button in auth_buttons:
-                            # 检查权限按钮是否与用户角色关联
+                            # 检查权限按钮是否与用户启用角色关联
                             button_has_permission = False
                             if is_super_admin:
                                 # 超级管理员拥有所有权限
                                 button_has_permission = True
                             else:
-                                # 检查普通用户角色是否拥有该按钮权限
-                                for user_role in current_user.roles:
-                                    if auth_button in user_role.menus:
+                                # 检查普通用户启用角色是否拥有该按钮权限
+                                for enabled_role in enabled_roles:
+                                    if auth_button in enabled_role.menus:
                                         button_has_permission = True
                                         break
                             

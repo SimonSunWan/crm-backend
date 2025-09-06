@@ -42,6 +42,17 @@ def authenticate_user(db, user_name: str, password: str) -> Optional[User]:
         return None
     if not verify_password(password, user.hashed_password):
         return None
+    
+    # 检查用户是否有启用的角色
+    if user.roles:
+        enabled_roles = [role for role in user.roles if role.status]
+        if not enabled_roles:
+            # 所有角色都被禁用，不允许登录
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="您的所有角色已被禁用，无法登录系统"
+            )
+    
     return user
 
 

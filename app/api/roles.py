@@ -23,6 +23,13 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
         raise HTTPException(status_code=401, detail="无效的token或用户不存在")
     if not user.status:
         raise HTTPException(status_code=400, detail="用户未启用")
+    
+    # 检查用户是否有启用的角色
+    if user.roles:
+        enabled_roles = [role for role in user.roles if role.status]
+        if not enabled_roles:
+            raise HTTPException(status_code=403, detail="您的所有角色已被禁用，无法访问系统")
+    
     return user
 
 
