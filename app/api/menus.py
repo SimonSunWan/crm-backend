@@ -105,7 +105,7 @@ def get_menus(
                     matches = True
                     if name_filter and name_filter.lower() not in menu.name.lower():
                         matches = False
-                    if path_filter and path_filter.lower() not in (menu.path or "").lower():
+                    if path_filter and path_filter.lower() not in (menu.path or "").lower() and path_filter.lower() not in (menu.link or "").lower():
                         matches = False
                     if type_filter and type_filter.lower() not in (menu.menu_type or "").lower():
                         matches = False
@@ -183,11 +183,13 @@ def get_navigation_menus(
                 if menu_has_permission:
                     authorized_menu_ids.add(menu.id)
         
-        # 构建树形结构，只包含有权限的菜单
+        # 构建树形结构，只包含有权限的菜单（排除权限按钮）
         def build_authorized_tree(parent_id=None):
             tree = []
             for menu in menus:
-                if menu.parent_id == parent_id and menu.id in authorized_menu_ids:
+                if (menu.parent_id == parent_id and 
+                    menu.id in authorized_menu_ids and 
+                    menu.menu_type != "button"):
                     # 递归构建子菜单
                     children = build_authorized_tree(menu.id)
                     
@@ -266,9 +268,13 @@ def create_menu(
     try:
         print(f"创建菜单 - 接收到的数据: {menu}")
         
-        # 检查菜单名称是否已存在
-        if menu_crud.get_by_name(db, menu.name):
+        # 检查菜单名称是否已存在（同层级查重）
+        if menu_crud.get_by_name_and_parent(db, menu.name, menu.parent_id):
             raise HTTPException(status_code=400, detail="菜单名称已存在")
+        
+        # 检查权限标识是否已存在（同层级查重，如果提供了权限标识）
+        if menu.auth_mark and menu_crud.get_by_auth_mark_and_parent(db, menu.auth_mark, menu.parent_id):
+            raise HTTPException(status_code=400, detail="权限标识已存在")
         
         # 检查路径是否已存在（如果提供了路径）
         if menu.path and menu_crud.get_by_path(db, menu.path):
@@ -285,6 +291,9 @@ def create_menu(
             parent_menu = menu_crud.get_or_404(db, menu.parent_id, "父菜单不存在")
         
         created_menu = menu_crud.create(db, menu_data)
+        
+        # 更新父菜单的is_enable状态
+        menu_crud.update_parent_enable_status(db, created_menu.id)
         
         # 转换为响应模型，处理children字段
         menu_dict = menu_to_response(created_menu)
@@ -327,10 +336,15 @@ def update_menu(
         # 检查菜单是否存在
         existing_menu = menu_crud.get_or_404(db, menu_id, "菜单未找到")
         
-        # 检查名称是否重复（如果更新了名称）
+        # 检查名称是否重复（如果更新了名称，同层级查重）
         if menu.name and menu.name != existing_menu.name:
-            if menu_crud.get_by_name(db, menu.name):
+            if menu_crud.get_by_name_and_parent(db, menu.name, existing_menu.parent_id):
                 raise HTTPException(status_code=400, detail="菜单名称已存在")
+        
+        # 检查权限标识是否重复（如果更新了权限标识，同层级查重）
+        if menu.auth_mark and menu.auth_mark != existing_menu.auth_mark:
+            if menu_crud.get_by_auth_mark_and_parent(db, menu.auth_mark, existing_menu.parent_id):
+                raise HTTPException(status_code=400, detail="权限标识已存在")
         
         # 检查路径是否重复（如果更新了路径）
         if menu.path and menu.path != existing_menu.path:
@@ -342,6 +356,10 @@ def update_menu(
         update_data["update_by"] = current_user.user_name
         
         updated_menu = menu_crud.update(db, existing_menu, update_data)
+        
+        # 更新父菜单的is_enable状态
+        menu_crud.update_parent_enable_status(db, menu_id)
+        
         # 转换为响应模型，处理children字段
         menu_dict = menu_to_response(updated_menu)
         menu_response = MenuResponse.model_validate(menu_dict)
@@ -378,11 +396,18 @@ def delete_menu(
         for role in roles_with_menu:
             role.menus = [m for m in role.menus if m.id != menu_id]
         
+        # 保存父菜单ID用于后续更新
+        parent_id = menu.parent_id
+        
         # 删除菜单
         menu_crud.delete(db, menu)
         
         # 提交事务
         db.commit()
+        
+        # 更新父菜单的is_enable状态
+        if parent_id:
+            menu_crud.update_parent_enable_status(db, parent_id)
         
         return ApiResponse(code=200, message="菜单删除成功")
     except HTTPException:
