@@ -204,15 +204,13 @@ def get_role_menus(
                     node = {
                         "id": menu.id,
                         "name": menu.name,
-                        "title": menu.title,
                         "path": menu.path,
                         "icon": menu.icon,
                         "sort": menu.sort,
                         "menuType": menu.menu_type,
-                        "authName": menu.auth_name,
                         "authMark": menu.auth_mark,
-                        "authSort": menu.auth_sort,
                         "isEnable": menu.is_enable,
+                        "isLink": menu.is_link,
                         "children": build_menu_tree(menus, menu.id)
                     }
                     tree.append(node)
