@@ -35,9 +35,12 @@ class DictionaryTypeResponse(DictionaryTypeBase):
 
 class DictionaryEnumBase(BaseModel):
     type_id: int = Field(alias='typeId')
+    parent_id: Optional[int] = Field(default=None, alias='parentId')
     key_value: str = Field(alias='keyValue')
     dict_value: str = Field(alias='dictValue')
     sort_order: Optional[int] = Field(default=0, alias='sortOrder')
+    level: Optional[int] = Field(default=1)
+    path: Optional[str] = None
 
     class Config:
         populate_by_name = True
@@ -48,9 +51,12 @@ class DictionaryEnumCreate(DictionaryEnumBase):
 
 
 class DictionaryEnumUpdate(BaseModel):
+    parent_id: Optional[int] = Field(default=None, alias='parentId')
     key_value: Optional[str] = Field(default=None, alias='keyValue')
     dict_value: Optional[str] = Field(default=None, alias='dictValue')
     sort_order: Optional[int] = Field(default=None, alias='sortOrder')
+    level: Optional[int] = None
+    path: Optional[str] = None
     status: Optional[bool] = None
 
     class Config:
@@ -64,6 +70,8 @@ class DictionaryEnumResponse(DictionaryEnumBase):
     create_time: Optional[datetime] = Field(default=None, alias='createTime')
     update_by: Optional[str] = Field(default=None, alias='updateBy')
     update_time: Optional[datetime] = Field(default=None, alias='updateTime')
+    children: Optional[List['DictionaryEnumResponse']] = []
+    hasChildren: Optional[bool] = False
 
     class Config:
         from_attributes = True

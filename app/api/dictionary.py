@@ -171,29 +171,44 @@ def delete_dictionary_type(type_id: int, db: Session = Depends(get_db)):
 
 # 字典枚举相关接口
 @router.get("/enums", response_model=ApiResponse)
-def get_dictionary_enums(type_id: int, current: int = 1, size: int = 100, db: Session = Depends(get_db)):
+def get_dictionary_enums(type_id: int, db: Session = Depends(get_db)):
     """获取字典枚举列表"""
     try:
-        skip = (current - 1) * size
-        enums = dictionary_enum_crud.get_by_type_id(db, type_id, skip=skip, limit=size)
+        tree = dictionary_enum_crud.build_cascade_tree(db, type_id)
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in tree]
         
-        total = db.query(dictionary_enum_crud.model).filter(
-            dictionary_enum_crud.model.type_id == type_id,
-            dictionary_enum_crud.model.status == True
-        ).count()
-        
-        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in enums]
-        
-        response_data = {
+        return ApiResponse(data={
             "records": enum_responses,
-            "total": total,
-            "current": current,
-            "size": size
-        }
-        
-        return ApiResponse(data=response_data)
+            "total": len(enum_responses),
+            "current": 1,
+            "size": len(enum_responses)
+        })
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取字典枚举列表失败: {str(e)}")
+
+
+@router.get("/enums/root", response_model=ApiResponse)
+def get_root_dictionary_enums(type_id: int, db: Session = Depends(get_db)):
+    """获取根级字典枚举列表"""
+    try:
+        root_enums = dictionary_enum_crud.get_root_enums(db, type_id)
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in root_enums]
+        
+        return ApiResponse(data=enum_responses)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取根级字典枚举失败: {str(e)}")
+
+
+@router.get("/enums/{parent_id}/children", response_model=ApiResponse)
+def get_children_dictionary_enums(parent_id: int, db: Session = Depends(get_db)):
+    """获取子级字典枚举列表"""
+    try:
+        children_enums = dictionary_enum_crud.get_children_by_parent_id(db, parent_id)
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in children_enums]
+        
+        return ApiResponse(data=enum_responses)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取子级字典枚举失败: {str(e)}")
 
 
 @router.post("/enums", response_model=ApiResponse)
@@ -204,7 +219,23 @@ def create_dictionary_enum(enum_data: DictionaryEnumCreate, db: Session = Depend
         if dictionary_enum_crud.get_by_type_id_and_key(db, enum_data.type_id, enum_data.key_value):
             raise HTTPException(status_code=400, detail="键值已存在")
         
-        created_enum = dictionary_enum_crud.create(db, enum_data.model_dump())
+        # 计算层级和路径
+        level = 1
+        path = enum_data.key_value
+        
+        if enum_data.parent_id:
+            parent_enum = dictionary_enum_crud.get(db, enum_data.parent_id)
+            if not parent_enum:
+                raise HTTPException(status_code=400, detail="父级枚举不存在")
+            level = (parent_enum.level or 0) + 1
+            path = f"{parent_enum.path}/{enum_data.key_value}" if parent_enum.path else f"{parent_enum.key_value}/{enum_data.key_value}"
+        
+        # 创建枚举数据
+        enum_dict = enum_data.model_dump()
+        enum_dict['level'] = level
+        enum_dict['path'] = path
+        
+        created_enum = dictionary_enum_crud.create(db, enum_dict)
         return ApiResponse(message="字典枚举创建成功", data=DictionaryEnumResponse.model_validate(created_enum))
     except HTTPException:
         raise
