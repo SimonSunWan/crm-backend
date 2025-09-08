@@ -61,8 +61,8 @@ def get_internal_orders(
         # 获取总数
         total = query.count()
         
-        # 获取分页数据
-        orders = query.offset(skip).limit(size).all()
+        # 按创建时间倒序排序并获取分页数据
+        orders = query.order_by(internal_order_crud.model.create_time.desc()).offset(skip).limit(size).all()
         order_responses = [InternalOrderResponse.model_validate(order) for order in orders]
         
         # 返回包含分页信息的响应
@@ -82,7 +82,22 @@ def get_internal_orders(
 def create_internal_order(order: InternalOrderCreate, db: Session = Depends(get_db)):
     """创建保内工单"""
     try:
-        created_order = internal_order_crud.create(db, order.model_dump())
+        order_data = order.model_dump()
+        
+        # 分离主工单数据和详情数据
+        detail_fields = [
+            'repair_person', 'repair_date', 'avic_responsibility', 'fault_classification',
+            'fault_location', 'part_category', 'part_location', 'repair_description',
+            'spare_part_location', 'spare_parts', 'costs', 'labors'
+        ]
+        
+        detail_data = {}
+        for field in detail_fields:
+            if field in order_data:
+                detail_data[field] = order_data.pop(field)
+        
+        # 创建工单和详情记录
+        created_order = internal_order_crud.create_with_details(db, order_data, detail_data)
         order_response = InternalOrderResponse.model_validate(created_order)
         return ApiResponse(message="保内工单创建成功", data=order_response)
     except Exception as e:
@@ -93,7 +108,7 @@ def create_internal_order(order: InternalOrderCreate, db: Session = Depends(get_
 def get_internal_order(order_id: str, db: Session = Depends(get_db)):
     """获取单个保内工单"""
     try:
-        order = internal_order_crud.get_by_id(db, order_id)
+        order = internal_order_crud.get_with_details(db, order_id)
         if not order:
             raise HTTPException(status_code=404, detail="保内工单未找到")
         order_response = InternalOrderResponse.model_validate(order)
@@ -109,7 +124,23 @@ def update_internal_order(order_id: str, order_update: InternalOrderUpdate, db: 
         order = internal_order_crud.get_by_id(db, order_id)
         if not order:
             raise HTTPException(status_code=404, detail="保内工单未找到")
-        updated_order = internal_order_crud.update(db, order, order_update.model_dump(exclude_unset=True))
+        
+        update_data = order_update.model_dump(exclude_unset=True)
+        
+        # 分离主工单数据和详情数据
+        detail_fields = [
+            'repair_person', 'repair_date', 'avic_responsibility', 'fault_classification',
+            'fault_location', 'part_category', 'part_location', 'repair_description',
+            'spare_part_location', 'spare_parts', 'costs', 'labors'
+        ]
+        
+        detail_data = {}
+        for field in detail_fields:
+            if field in update_data:
+                detail_data[field] = update_data.pop(field)
+        
+        # 更新工单和详情记录
+        updated_order = internal_order_crud.update_with_details(db, order_id, update_data, detail_data)
         order_response = InternalOrderResponse.model_validate(updated_order)
         return ApiResponse(message="保内工单更新成功", data=order_response)
     except Exception as e:
@@ -175,8 +206,8 @@ def get_external_orders(
         # 获取总数
         total = query.count()
         
-        # 获取分页数据
-        orders = query.offset(skip).limit(size).all()
+        # 按创建时间倒序排序并获取分页数据
+        orders = query.order_by(external_order_crud.model.create_time.desc()).offset(skip).limit(size).all()
         order_responses = [ExternalOrderResponse.model_validate(order) for order in orders]
         
         # 返回包含分页信息的响应
@@ -196,7 +227,22 @@ def get_external_orders(
 def create_external_order(order: ExternalOrderCreate, db: Session = Depends(get_db)):
     """创建保外工单"""
     try:
-        created_order = external_order_crud.create(db, order.model_dump())
+        order_data = order.model_dump()
+        
+        # 分离主工单数据和详情数据
+        detail_fields = [
+            'repair_person', 'repair_date', 'avic_responsibility', 'fault_classification',
+            'fault_location', 'part_category', 'part_location', 'repair_description',
+            'spare_part_location', 'spare_parts', 'costs', 'labors'
+        ]
+        
+        detail_data = {}
+        for field in detail_fields:
+            if field in order_data:
+                detail_data[field] = order_data.pop(field)
+        
+        # 创建工单和详情记录
+        created_order = external_order_crud.create_with_details(db, order_data, detail_data)
         order_response = ExternalOrderResponse.model_validate(created_order)
         return ApiResponse(message="保外工单创建成功", data=order_response)
     except Exception as e:
@@ -223,7 +269,23 @@ def update_external_order(order_id: str, order_update: ExternalOrderUpdate, db: 
         order = external_order_crud.get_by_id(db, order_id)
         if not order:
             raise HTTPException(status_code=404, detail="保外工单未找到")
-        updated_order = external_order_crud.update(db, order, order_update.model_dump(exclude_unset=True))
+        
+        update_data = order_update.model_dump(exclude_unset=True)
+        
+        # 分离主工单数据和详情数据
+        detail_fields = [
+            'repair_person', 'repair_date', 'avic_responsibility', 'fault_classification',
+            'fault_location', 'part_category', 'part_location', 'repair_description',
+            'spare_part_location', 'spare_parts', 'costs', 'labors'
+        ]
+        
+        detail_data = {}
+        for field in detail_fields:
+            if field in update_data:
+                detail_data[field] = update_data.pop(field)
+        
+        # 更新工单和详情记录
+        updated_order = external_order_crud.update_with_details(db, order_id, update_data, detail_data)
         order_response = ExternalOrderResponse.model_validate(updated_order)
         return ApiResponse(message="保外工单更新成功", data=order_response)
     except Exception as e:

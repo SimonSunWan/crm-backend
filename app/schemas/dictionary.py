@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from typing import Optional, List
 from datetime import datetime
 
@@ -27,6 +27,13 @@ class DictionaryTypeResponse(DictionaryTypeBase):
     create_time: Optional[datetime] = Field(default=None, alias='createTime')
     update_by: Optional[str] = Field(default=None, alias='updateBy')
     update_time: Optional[datetime] = Field(default=None, alias='updateTime')
+
+    @field_serializer('create_time', 'update_time')
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        """序列化datetime为yyyy-MM-dd HH:mm:ss格式"""
+        if value is None:
+            return None
+        return value.strftime('%Y-%m-%d %H:%M:%S')
 
     class Config:
         from_attributes = True
@@ -72,6 +79,13 @@ class DictionaryEnumResponse(DictionaryEnumBase):
     update_time: Optional[datetime] = Field(default=None, alias='updateTime')
     children: Optional[List['DictionaryEnumResponse']] = []
     hasChildren: Optional[bool] = False
+
+    @field_serializer('create_time', 'update_time')
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        """序列化datetime为yyyy-MM-dd HH:mm:ss格式"""
+        if value is None:
+            return None
+        return value.strftime('%Y-%m-%d %H:%M:%S')
 
     class Config:
         from_attributes = True

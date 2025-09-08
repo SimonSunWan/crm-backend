@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Text, Date, Float, Boolean, DateTime
+from sqlalchemy import Column, String, Text, Date, Float, Boolean, DateTime, Integer, JSON, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.base import TimestampMixin
 
@@ -27,6 +28,37 @@ class InternalOrder(Base, TimestampMixin):
     pack_date = Column(Date)
     under_warranty = Column(Boolean, default=True)
     fault_description = Column(Text)
+    
+    # 关联详情记录
+    details = relationship("InternalOrderDetail", back_populates="order", cascade="all, delete-orphan")
+
+
+class InternalOrderDetail(Base, TimestampMixin):
+    """保内工单详情记录模型"""
+    
+    __tablename__ = "internal_order_details"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(String, ForeignKey('internal_orders.id'), nullable=False, index=True)
+    
+    # 维修记录字段
+    repair_person = Column(String)
+    repair_date = Column(Date)
+    avic_responsibility = Column(Boolean, default=True)
+    fault_classification = Column(String)
+    fault_location = Column(String)
+    part_category = Column(String)
+    part_location = Column(String)
+    repair_description = Column(Text)
+    
+    # 详情记录字段
+    spare_part_location = Column(String)
+    spare_parts = Column(JSON)  # 备件使用详情
+    costs = Column(JSON)  # 费用使用详情
+    labors = Column(JSON)  # 工时详情
+    
+    # 关联主工单
+    order = relationship("InternalOrder", back_populates="details")
 
 
 class ExternalOrder(Base, TimestampMixin):
@@ -52,3 +84,34 @@ class ExternalOrder(Base, TimestampMixin):
     pack_date = Column(Date)
     under_warranty = Column(Boolean, default=False)
     fault_description = Column(Text)
+    
+    # 关联详情记录
+    details = relationship("ExternalOrderDetail", back_populates="order", cascade="all, delete-orphan")
+
+
+class ExternalOrderDetail(Base, TimestampMixin):
+    """保外工单详情记录模型"""
+    
+    __tablename__ = "external_order_details"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(String, ForeignKey('external_orders.id'), nullable=False, index=True)
+    
+    # 维修记录字段
+    repair_person = Column(String)
+    repair_date = Column(Date)
+    avic_responsibility = Column(Boolean, default=True)
+    fault_classification = Column(String)
+    fault_location = Column(String)
+    part_category = Column(String)
+    part_location = Column(String)
+    repair_description = Column(Text)
+    
+    # 详情记录字段
+    spare_part_location = Column(String)
+    spare_parts = Column(JSON)  # 备件使用详情
+    costs = Column(JSON)  # 费用使用详情
+    labors = Column(JSON)  # 工时详情
+    
+    # 关联主工单
+    order = relationship("ExternalOrder", back_populates="details")

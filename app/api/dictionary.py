@@ -61,10 +61,10 @@ def get_dictionary_by_code(code: str, db: Session = Depends(get_db)):
         if not dictionary_type:
             raise HTTPException(status_code=404, detail="字典类型不存在")
         
-        # 获取该类型下的所有字典枚举
-        enums = dictionary_enum_crud.get_by_type_id(db, dictionary_type.id, skip=0, limit=1000)
+        # 构建级联树结构，只返回根级项
+        tree = dictionary_enum_crud.build_cascade_tree(db, dictionary_type.id)
         
-        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in enums]
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in tree]
         
         response_data = {
             "type": DictionaryTypeResponse.model_validate(dictionary_type),
@@ -87,10 +87,10 @@ def get_dictionary_by_code_public(code: str, db: Session = Depends(get_db)):
         if not dictionary_type:
             raise HTTPException(status_code=404, detail="字典类型不存在")
         
-        # 获取该类型下的所有字典枚举
-        enums = dictionary_enum_crud.get_by_type_id(db, dictionary_type.id, skip=0, limit=1000)
+        # 构建级联树结构，只返回根级项
+        tree = dictionary_enum_crud.build_cascade_tree(db, dictionary_type.id)
         
-        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in enums]
+        enum_responses = [DictionaryEnumResponse.model_validate(enum_obj) for enum_obj in tree]
         
         response_data = {
             "type": DictionaryTypeResponse.model_validate(dictionary_type),

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_serializer
 from typing import Optional, Any
-from datetime import datetime
+from datetime import datetime, date
 import re
 
 
@@ -17,6 +17,33 @@ class CamelCaseModel(BaseModel):
         populate_by_name=True,
         from_attributes=True
     )
+
+
+class TimestampMixin(BaseModel):
+    """时间戳混入类，提供时间字段的序列化"""
+    create_time: Optional[datetime] = None
+    update_time: Optional[datetime] = None
+    
+    @field_serializer('create_time', 'update_time')
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        """序列化datetime为yyyy-MM-dd HH:mm:ss格式"""
+        if value is None:
+            return None
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+
+
+class DateMixin(BaseModel):
+    """日期混入类，提供日期字段的序列化"""
+    report_date: Optional[date] = None
+    vehicle_date: Optional[date] = None
+    pack_date: Optional[date] = None
+    
+    @field_serializer('report_date', 'vehicle_date', 'pack_date')
+    def serialize_date(self, value: Optional[date]) -> Optional[str]:
+        """序列化date为yyyy-MM-dd格式"""
+        if value is None:
+            return None
+        return value.strftime('%Y-%m-%d')
 
 
 class BaseResponse(BaseModel):

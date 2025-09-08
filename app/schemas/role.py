@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional
 from datetime import datetime
 from app.schemas.base import ApiResponse, CamelCaseModel
@@ -32,3 +32,10 @@ class RoleResponse(RoleBase):
     create_time: Optional[datetime] = None
     update_by: Optional[str] = None
     update_time: Optional[datetime] = None
+
+    @field_serializer('create_time', 'update_time')
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        """序列化datetime为yyyy-MM-dd HH:mm:ss格式"""
+        if value is None:
+            return None
+        return value.strftime('%Y-%m-%d %H:%M:%S')
