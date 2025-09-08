@@ -253,7 +253,7 @@ def create_external_order(order: ExternalOrderCreate, db: Session = Depends(get_
 def get_external_order(order_id: str, db: Session = Depends(get_db)):
     """获取单个保外工单"""
     try:
-        order = external_order_crud.get_by_id(db, order_id)
+        order = external_order_crud.get_with_details(db, order_id)
         if not order:
             raise HTTPException(status_code=404, detail="保外工单未找到")
         order_response = ExternalOrderResponse.model_validate(order)

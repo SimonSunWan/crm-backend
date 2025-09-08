@@ -1,5 +1,5 @@
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 from datetime import datetime
 from app.core.crud import CRUDBase
@@ -81,7 +81,12 @@ class InternalOrderCRUD(CRUDBase[InternalOrder]):
 
     def get_with_details(self, db: Session, order_id: str) -> Optional[InternalOrder]:
         """获取工单及其详情记录"""
-        return db.query(self.model).filter(self.model.id == order_id).first()
+        return (
+            db.query(self.model)
+            .options(joinedload(self.model.details))
+            .filter(self.model.id == order_id)
+            .first()
+        )
 
 
 class ExternalOrderCRUD(CRUDBase[ExternalOrder]):
@@ -156,6 +161,15 @@ class ExternalOrderCRUD(CRUDBase[ExternalOrder]):
         db.commit()
         db.refresh(order)
         return order
+
+    def get_with_details(self, db: Session, order_id: str) -> Optional[ExternalOrder]:
+        """获取工单及其详情记录"""
+        return (
+            db.query(self.model)
+            .options(joinedload(self.model.details))
+            .filter(self.model.id == order_id)
+            .first()
+        )
 
 
 internal_order_crud = InternalOrderCRUD(InternalOrder)

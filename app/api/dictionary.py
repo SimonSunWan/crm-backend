@@ -30,13 +30,28 @@ def get_current_user_dependency(authorization: str = Header(...), db: Session = 
 
 # 字典类型相关接口
 @router.get("/types", response_model=ApiResponse)
-def get_dictionary_types(current: int = 1, size: int = 100, db: Session = Depends(get_db)):
+def get_dictionary_types(
+    current: int = 1, 
+    size: int = 10, 
+    name: str = None,
+    db: Session = Depends(get_db)
+):
     """获取字典类型列表"""
     try:
         skip = (current - 1) * size
-        types = dictionary_type_crud.get_multi(db, skip=skip, limit=size)
         
-        total = db.query(dictionary_type_crud.model).count()
+        # 构建查询
+        query = db.query(dictionary_type_crud.model)
+        
+        # 添加搜索条件
+        if name:
+            query = query.filter(dictionary_type_crud.model.name.contains(name))
+        
+        # 获取总数
+        total = query.count()
+        
+        # 获取分页数据
+        types = query.offset(skip).limit(size).all()
         
         type_responses = [DictionaryTypeResponse.model_validate(type_obj) for type_obj in types]
         
