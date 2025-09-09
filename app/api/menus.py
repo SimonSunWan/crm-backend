@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.deps import get_current_superuser
+from app.core.exceptions import CRMException
 from app.schemas.menu import MenuCreate, MenuResponse, MenuUpdate
 from app.schemas.base import ApiResponse
 from app.crud.menu import menu_crud
@@ -51,25 +52,7 @@ def menu_to_response(menu) -> dict:
     }
 
 
-def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
-    """获取当前登录用户的依赖函数"""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="无效的认证头")
-    
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="无效的token或用户不存在")
-    if not user.status:
-        raise HTTPException(status_code=400, detail="用户未启用")
-    
-    # 检查用户是否有启用的角色
-    if user.roles:
-        enabled_roles = [role for role in user.roles if role.status]
-        if not enabled_roles:
-            raise HTTPException(status_code=403, detail="您的所有角色已被禁用，无法访问系统")
-    
-    return user
+# 菜单相关接口
 
 
 @router.get("/", response_model=ApiResponse)
@@ -151,7 +134,7 @@ def get_menu_tree(db: Session = Depends(get_db)):
 
 @router.get("/navigation", response_model=ApiResponse)
 def get_navigation_menus(
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """获取导航菜单（用于左侧菜单和动态路由）"""
@@ -269,7 +252,7 @@ def get_navigation_menus(
 @router.post("/", response_model=ApiResponse)
 def create_menu(
     menu: MenuCreate, 
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """创建菜单"""
@@ -336,7 +319,7 @@ def get_menu(menu_id: int, db: Session = Depends(get_db)):
 def update_menu(
     menu_id: int,
     menu: MenuUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """更新菜单"""

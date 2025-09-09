@@ -3,21 +3,27 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 from app.core.config import settings
+from app.core.exceptions import InvalidCredentialsError, UserDisabledError
 from app.models.user import User
+from app.models.role import Role
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """验证密码"""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
+    """生成密码哈希"""
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """创建访问令牌"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -29,6 +35,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 def verify_token(token: str) -> Optional[dict]:
+    """验证令牌"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         return payload
@@ -36,7 +43,8 @@ def verify_token(token: str) -> Optional[dict]:
         return None
 
 
-def authenticate_user(db, user_name: str, password: str) -> Optional[User]:
+def authenticate_user(db: Session, user_name: str, password: str) -> Optional[User]:
+    """验证用户凭据"""
     user = db.query(User).filter(User.user_name == user_name).first()
     if not user:
         return None
@@ -47,16 +55,12 @@ def authenticate_user(db, user_name: str, password: str) -> Optional[User]:
     if user.roles:
         enabled_roles = [role for role in user.roles if role.status]
         if not enabled_roles:
-            # 所有角色都被禁用，不允许登录
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="您的所有角色已被禁用，无法登录系统"
-            )
+            raise UserDisabledError("您的所有角色已被禁用，无法登录系统")
     
     return user
 
 
-def get_current_user(token: str, db) -> Optional[User]:
+def get_current_user(token: str, db: Session) -> Optional[User]:
     """根据token获取当前用户"""
     payload = verify_token(token)
     if payload is None:
@@ -66,3 +70,9 @@ def get_current_user(token: str, db) -> Optional[User]:
         return None
     user = db.query(User).filter(User.id == int(user_id)).first()
     return user
+
+
+def check_user_permissions(user: User, required_role_codes: list) -> bool:
+    """检查用户权限"""
+    user_role_codes = [role.role_code for role in user.roles if role.status]
+    return any(role_code in user_role_codes for role_code in required_role_codes)

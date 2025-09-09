@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.deps import get_current_superuser
+from app.core.exceptions import CRMException
 from app.schemas.dictionary import (
     DictionaryTypeCreate, DictionaryTypeResponse, DictionaryTypeUpdate,
     DictionaryEnumCreate, DictionaryEnumResponse, DictionaryEnumUpdate,
@@ -12,20 +13,6 @@ from app.crud.dictionary import dictionary_type_crud, dictionary_enum_crud
 from app.models.user import User
 
 router = APIRouter()
-
-
-def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
-    """获取当前登录用户的依赖函数"""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="无效的认证头")
-    
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="无效的token或用户不存在")
-    if not user.status:
-        raise HTTPException(status_code=400, detail="用户未启用")
-    return user
 
 
 # 字典类型相关接口

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Header, Body, Query
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.deps import get_current_superuser
+from app.core.exceptions import CRMException
 from app.schemas.role import RoleCreate, RoleResponse, RoleUpdate
 from app.schemas.base import ApiResponse
 from app.crud.role import role_crud
@@ -12,25 +13,7 @@ from app.models.role import Role
 router = APIRouter()
 
 
-def get_current_user_dependency(authorization: str = Header(...), db: Session = Depends(get_db)) -> User:
-    """获取当前登录用户的依赖函数"""
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="无效的认证头")
-    
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-    if not user:
-        raise HTTPException(status_code=401, detail="无效的token或用户不存在")
-    if not user.status:
-        raise HTTPException(status_code=400, detail="用户未启用")
-    
-    # 检查用户是否有启用的角色
-    if user.roles:
-        enabled_roles = [role for role in user.roles if role.status]
-        if not enabled_roles:
-            raise HTTPException(status_code=403, detail="您的所有角色已被禁用，无法访问系统")
-    
-    return user
+# 角色相关接口
 
 
 @router.get("/", response_model=ApiResponse)
@@ -93,7 +76,7 @@ def get_all_roles(db: Session = Depends(get_db)):
 @router.post("/", response_model=ApiResponse)
 def create_role(
     role: RoleCreate, 
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """创建角色"""
@@ -134,7 +117,7 @@ def get_role(role_id: int, db: Session = Depends(get_db)):
 def update_role(
     role_id: int, 
     role_update: RoleUpdate, 
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """更新角色"""
@@ -168,7 +151,7 @@ def update_role(
 @router.delete("/{role_id}", response_model=ApiResponse)
 def delete_role(
     role_id: int, 
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """删除角色"""
@@ -246,7 +229,7 @@ def get_role_menus(
 def update_role_menus(
     role_id: int,
     menu_data: dict = Body(...),
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """更新角色的菜单权限"""
@@ -285,7 +268,7 @@ def update_role_menus(
 
 @router.post("/cleanup-orphaned-permissions", response_model=ApiResponse)
 def cleanup_orphaned_permissions(
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_superuser),
     db: Session = Depends(get_db)
 ):
     """清理所有角色中已删除菜单的权限"""

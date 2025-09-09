@@ -8,9 +8,10 @@ from app.api.api import api_router
 from app.core.database import SessionLocal
 from app.crud.user import user_crud
 from app.schemas.base import ApiResponse
+from app.core.exceptions import CRMException
+from app.core.middleware import LoggingMiddleware, SecurityHeadersMiddleware
 import traceback
 import logging
-from sqlalchemy import any_
 import os
 
 # 配置日志
@@ -77,11 +78,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 添加自定义中间件
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+
 # 挂载静态文件服务（在路由注册之前）
 if os.path.exists("uploads"):
     app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # 然后注册异常处理器
+@app.exception_handler(CRMException)
+async def crm_exception_handler(request: Request, exc: CRMException):
+    """CRM自定义异常处理器"""
+    logger.error(f"CRM异常: {exc.status_code} - {exc.detail}")
+    error_response = ApiResponse(
+        code=exc.status_code,
+        message=exc.detail,
+        data=None
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_response.model_dump()
+    )
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """HTTP异常处理器"""
