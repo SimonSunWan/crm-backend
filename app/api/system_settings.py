@@ -4,8 +4,8 @@ from typing import List
 from app.core.database import get_db
 from app.core.deps import get_current_superuser
 from app.core.exceptions import CRMException
-from app.crud.system_setting import system_setting_crud
-from app.schemas.system_setting import SystemSettingResponse
+from app.crud.system_settings import system_setting_crud
+from app.schemas.system_settings import SystemSettingResponse
 from app.schemas.base import ApiResponse
 from app.models.user import User
 

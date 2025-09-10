@@ -3,7 +3,7 @@ import random
 import string
 from datetime import datetime
 from app.core.database import SessionLocal
-from app.crud.system_setting import system_setting_crud
+from app.crud.system_settings import system_setting_crud
 
 
 def generate_system_code():

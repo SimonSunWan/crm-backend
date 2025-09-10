@@ -161,7 +161,7 @@ def get_users(
 def register_user(user: UserRegister, db: Session = Depends(get_db)):
     """用户注册"""
     # 校验系统码
-    from app.crud.system_setting import system_setting_crud
+    from app.crud.system_settings import system_setting_crud
     system_code_setting = system_setting_crud.get_by_key(db, setting_key="REGISTER_SYSTEM_CODE")
     if not system_code_setting or system_code_setting.setting_value != user.system_code:
         raise InvalidSystemCodeError("系统码错误")
@@ -310,7 +310,7 @@ def delete_user(
 def forget_password(data: UserForgetPassword, db: Session = Depends(get_db)):
     """忘记密码重置"""
     # 校验系统码
-    from app.crud.system_setting import system_setting_crud
+    from app.crud.system_settings import system_setting_crud
     system_code_setting = system_setting_crud.get_by_key(db, setting_key="REGISTER_SYSTEM_CODE")
     if not system_code_setting or system_code_setting.setting_value != data.system_code:
         raise InvalidSystemCodeError("系统码错误")

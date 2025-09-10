@@ -24,12 +24,12 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         # 初始化角色数据
-        from init_roles import init_roles
+        from scripts.init_roles import init_roles
         init_roles()
         
         # 启动系统码生成器
         import asyncio
-        from system_code_generator import system_code_scheduler
+        from scripts.system_code_generator import system_code_scheduler
         asyncio.create_task(system_code_scheduler())
         
         # 检查是否已存在超级管理员
