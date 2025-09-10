@@ -14,3 +14,5 @@ email-validator==2.2.0
 black==25.1.0
 isort==6.0.1
 flake8==7.3.0
+redis==6.4.0
+hiredis==3.2.1

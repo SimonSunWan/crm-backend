@@ -59,5 +59,5 @@ class InvalidSystemCodeError(CRMException):
 class SuperAdminOperationError(CRMException):
     """超级管理员操作异常"""
 
-    def __init__(self, detail: str = "不允许对超级管理员执行此操作"):
+    def __init__(self, detail: str = "不允许对超级管理员进行操作"):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)

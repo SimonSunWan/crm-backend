@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.exceptions import CRMException
 from app.core.middleware import LoggingMiddleware, SecurityHeadersMiddleware
-from app.crud.user import user_crud
+from app.core.redis_client import redis_client
 from app.schemas.base import ApiResponse
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,21 +20,15 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+
     db = SessionLocal()
     try:
-        from scripts.init_roles import init_roles
-
-        init_roles()
-
         import asyncio
 
-        from scripts.system_code_generator import system_code_scheduler
+        from scripts.init_system import system_code_scheduler
 
         asyncio.create_task(system_code_scheduler())
-
-        from app.core.crud_helpers import get_or_create_default_admin
-
-        get_or_create_default_admin(db, user_crud)
     finally:
         db.close()
 

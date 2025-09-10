@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import auth, dictionary, menu, order, role, system, user
+from app.api import auth, cache, dictionary, menu, order, role, system, user
 
 api_router = APIRouter()
 
@@ -10,6 +10,5 @@ api_router.include_router(dictionary.router, prefix="/dictionary", tags=["dictio
 api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(menu.router, prefix="/menus", tags=["menus"])
 api_router.include_router(order.router, prefix="/orders", tags=["orders"])
-api_router.include_router(
-    system.router, prefix="/system", tags=["system-settings"]
-)
+api_router.include_router(system.router, prefix="/system", tags=["system-settings"])
+api_router.include_router(cache.router, prefix="/cache", tags=["cache"])

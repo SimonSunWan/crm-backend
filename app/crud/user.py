@@ -3,8 +3,14 @@ from typing import Any, Dict, Optional
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
+from app.core.cache_decorators import cached
 from app.core.crud import CRUDBase
 from app.core.exceptions import UserAlreadyExistsError
+from app.core.redis_client import (
+    cache_key_user,
+    cache_key_user_by_email,
+    cache_key_user_by_username,
+)
 from app.models.user import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -33,14 +39,26 @@ class CRUDUser(CRUDBase[User]):
         if "password" in user_data:
             user_data["hashed_password"] = pwd_context.hash(user_data.pop("password"))
 
-        return super().create(db, user_data)
+        user = super().create(db, user_data)
 
+        # 清除相关缓存
+        self._invalidate_user_cache(user)
+
+        return user
+
+    @cached(lambda db, user_id: cache_key_user(user_id), ttl=1800)
+    def get(self, db: Session, user_id: int) -> Optional[User]:
+        """根据ID获取用户（带缓存）"""
+        return super().get(db, user_id)
+
+    @cached(lambda db, username: cache_key_user_by_username(username), ttl=1800)
     def get_by_username(self, db: Session, username: str) -> Optional[User]:
-        """根据用户名获取用户"""
+        """根据用户名获取用户（带缓存）"""
         return db.query(User).filter(User.user_name == username).first()
 
+    @cached(lambda db, email: cache_key_user_by_email(email), ttl=1800)
     def get_by_email(self, db: Session, email: str) -> Optional[User]:
-        """根据邮箱获取用户"""
+        """根据邮箱获取用户（带缓存）"""
         return db.query(User).filter(User.email == email).first()
 
     def get_by_phone(self, db: Session, phone: str) -> Optional[User]:
@@ -61,7 +79,44 @@ class CRUDUser(CRUDBase[User]):
         user.hashed_password = pwd_context.hash(new_password)
         db.commit()
         db.refresh(user)
+
+        # 清除用户缓存
+        self._invalidate_user_cache(user)
+
         return user
+
+    def update(self, db: Session, db_obj: User, obj_in: Dict[str, Any]) -> User:
+        """更新用户"""
+        updated_user = super().update(db, db_obj, obj_in)
+
+        # 清除用户缓存
+        self._invalidate_user_cache(updated_user)
+
+        return updated_user
+
+    def delete(self, db: Session, db_obj: User) -> None:
+        """删除用户"""
+        # 先清除缓存
+        self._invalidate_user_cache(db_obj)
+
+        # 再删除用户
+        super().delete(db, db_obj)
+
+    def _invalidate_user_cache(self, user: User):
+        """清除用户相关缓存"""
+        from app.core.redis_client import cache_manager
+
+        # 清除各种用户缓存
+        cache_keys = [
+            cache_key_user(user.id),
+            cache_key_user_by_username(user.user_name),
+        ]
+
+        if user.email:
+            cache_keys.append(cache_key_user_by_email(user.email))
+
+        for key in cache_keys:
+            cache_manager.delete(key)
 
 
 user_crud = CRUDUser(User)

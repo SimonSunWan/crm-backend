@@ -1,9 +1,9 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from app.schemas.base import CamelCaseModel
 
 
-class DictionaryTypeBase(BaseModel):
+class DictionaryTypeBase(CamelCaseModel):
     name: str
     code: str
     description: Optional[str] = None
@@ -13,7 +13,7 @@ class DictionaryTypeCreate(DictionaryTypeBase):
     pass
 
 
-class DictionaryTypeUpdate(BaseModel):
+class DictionaryTypeUpdate(CamelCaseModel):
     name: Optional[str] = None
     code: Optional[str] = None
     description: Optional[str] = None
@@ -24,50 +24,36 @@ class DictionaryTypeResponse(DictionaryTypeBase):
     id: int
     status: bool
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
-
-class DictionaryEnumBase(BaseModel):
-    type_id: int = Field(alias="typeId")
-    parent_id: Optional[int] = Field(default=None, alias="parentId")
-    key_value: str = Field(alias="keyValue")
-    dict_value: str = Field(alias="dictValue")
-    sort_order: Optional[int] = Field(default=0, alias="sortOrder")
-    level: Optional[int] = Field(default=1)
+class DictionaryEnumBase(CamelCaseModel):
+    type_id: int
+    parent_id: Optional[int] = None
+    key_value: str
+    dict_value: str
+    sort_order: Optional[int] = 0
+    level: Optional[int] = 1
     path: Optional[str] = None
-
-    class Config:
-        populate_by_name = True
 
 
 class DictionaryEnumCreate(DictionaryEnumBase):
     pass
 
 
-class DictionaryEnumUpdate(BaseModel):
-    parent_id: Optional[int] = Field(default=None, alias="parentId")
-    key_value: Optional[str] = Field(default=None, alias="keyValue")
-    dict_value: Optional[str] = Field(default=None, alias="dictValue")
-    sort_order: Optional[int] = Field(default=None, alias="sortOrder")
+class DictionaryEnumUpdate(CamelCaseModel):
+    parent_id: Optional[int] = None
+    key_value: Optional[str] = None
+    dict_value: Optional[str] = None
+    sort_order: Optional[int] = None
     level: Optional[int] = None
     path: Optional[str] = None
     status: Optional[bool] = None
-
-    class Config:
-        populate_by_name = True
 
 
 class DictionaryEnumResponse(DictionaryEnumBase):
     id: int
     status: bool
     children: Optional[List["DictionaryEnumResponse"]] = []
-    hasChildren: Optional[bool] = False
-
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    has_children: Optional[bool] = False
 
 
 class DictionaryTypeWithEnumsResponse(DictionaryTypeResponse):

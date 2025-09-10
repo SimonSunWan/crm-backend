@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-代码格式化脚本
-使用 black、isort 和 flake8 来格式化和检查代码
-"""
+"""代码格式化脚本"""
 
 import subprocess
 import sys

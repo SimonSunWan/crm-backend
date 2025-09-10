@@ -2,7 +2,9 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+from app.core.cache_decorators import cached
 from app.core.crud import CRUDBase
+from app.core.redis_client import cache_key_menu_tree
 from app.models.menu import Menu
 
 
@@ -39,8 +41,12 @@ class CRUDMenu(CRUDBase[Menu]):
         """根据路径获取菜单"""
         return db.query(self.model).filter(self.model.path == path).first()
 
+    @cached(
+        lambda db, parent_id=None: f"{cache_key_menu_tree()}:{parent_id or 'root'}",
+        ttl=7200,
+    )
     def get_tree(self, db: Session, parent_id: Optional[int] = None) -> List[Menu]:
-        """获取菜单树形结构"""
+        """获取菜单树形结构（带缓存）"""
         query = db.query(self.model).filter(self.model.parent_id == parent_id)
         menus = query.order_by(self.model.sort).all()
 
@@ -96,6 +102,30 @@ class CRUDMenu(CRUDBase[Menu]):
 
             # 递归更新更上层的父菜单
             self.update_parent_enable_status(db, parent_id)
+
+    def create(self, db: Session, obj_in: dict) -> Menu:
+        """创建菜单"""
+        menu = super().create(db, obj_in)
+        self._invalidate_menu_cache()
+        return menu
+
+    def update(self, db: Session, db_obj: Menu, obj_in: dict) -> Menu:
+        """更新菜单"""
+        menu = super().update(db, db_obj, obj_in)
+        self._invalidate_menu_cache()
+        return menu
+
+    def delete(self, db: Session, db_obj: Menu) -> None:
+        """删除菜单"""
+        super().delete(db, db_obj)
+        self._invalidate_menu_cache()
+
+    def _invalidate_menu_cache(self):
+        """清除菜单相关缓存"""
+        from app.core.redis_client import cache_manager
+
+        # 清除菜单树缓存
+        cache_manager.delete_pattern("menu:tree:*")
 
 
 menu_crud = CRUDMenu(Menu)

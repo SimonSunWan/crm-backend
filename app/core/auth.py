@@ -57,7 +57,7 @@ def authenticate_user(db: Session, user_name: str, password: str) -> Optional[Us
     if user.roles:
         enabled_roles = [role for role in user.roles if role.status]
         if not enabled_roles:
-            raise UserDisabledError("您的所有角色已被禁用，无法登录系统")
+            raise UserDisabledError("您的角色已被禁用")
 
     return user
 

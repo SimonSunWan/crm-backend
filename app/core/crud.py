@@ -27,17 +27,7 @@ class CRUDBase(Generic[ModelType]):
     ) -> List[ModelType]:
         """获取多个记录"""
         query = db.query(self.model)
-
-        if filters:
-            for field, value in filters.items():
-                if hasattr(self.model, field) and value is not None:
-                    if isinstance(value, str):
-                        query = query.filter(
-                            getattr(self.model, field).ilike(f"%{value}%")
-                        )
-                    else:
-                        query = query.filter(getattr(self.model, field) == value)
-
+        query = self._apply_filters(query, filters)
         return query.offset(skip).limit(limit).all()
 
     def create(self, db: Session, obj_in: Dict[str, Any]) -> ModelType:
@@ -76,15 +66,19 @@ class CRUDBase(Generic[ModelType]):
     def count(self, db: Session, filters: Optional[Dict[str, Any]] = None) -> int:
         """统计记录数量"""
         query = db.query(self.model)
-
-        if filters:
-            for field, value in filters.items():
-                if hasattr(self.model, field) and value is not None:
-                    if isinstance(value, str):
-                        query = query.filter(
-                            getattr(self.model, field).ilike(f"%{value}%")
-                        )
-                    else:
-                        query = query.filter(getattr(self.model, field) == value)
-
+        query = self._apply_filters(query, filters)
         return query.count()
+
+    def _apply_filters(self, query, filters: Optional[Dict[str, Any]] = None):
+        """应用过滤条件"""
+        if not filters:
+            return query
+
+        for field, value in filters.items():
+            if hasattr(self.model, field) and value is not None:
+                column = getattr(self.model, field)
+                if isinstance(value, str):
+                    query = query.filter(column.ilike(f"%{value}%"))
+                else:
+                    query = query.filter(column == value)
+        return query

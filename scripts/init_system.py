@@ -65,7 +65,7 @@ async def system_code_scheduler():
 
     # 每10分钟执行一次
     while True:
-        await asyncio.sleep(600)  # 600秒 = 10分钟
+        await asyncio.sleep(1800)  # 1800秒 = 30分钟
         await update_system_code()
 
 

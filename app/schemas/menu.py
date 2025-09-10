@@ -1,12 +1,10 @@
 from typing import List, Optional
 
-from pydantic import BaseModel
-
 from app.schemas.base import CamelCaseModel
 
 
 # 前向引用声明
-class RoleResponseForMenu(BaseModel):
+class RoleResponseForMenu(CamelCaseModel):
     id: int
     role_name: str
     role_code: str
