@@ -41,34 +41,25 @@ def update_current_user_info(
     db: Session = Depends(get_db),
 ):
     """更新当前登录用户的个人信息"""
-    # 处理角色数据
     update_data = user_update.model_dump(exclude_unset=True)
     role_codes = update_data.pop("roles", None)
 
-    # 将空字符串转换为None，避免唯一约束冲突
     if "email" in update_data and update_data["email"] == "":
         update_data["email"] = None
 
-    # 不允许通过此接口修改角色
     if role_codes is not None:
         raise HTTPException(status_code=400, detail="不允许通过此接口修改角色")
 
-    # 检查邮箱唯一性（排除当前用户）
     if "email" in update_data and update_data["email"]:
         existing_user = user_crud.get_by_email(db, update_data["email"])
         if existing_user and existing_user.id != current_user.id:
             raise UserAlreadyExistsError("邮箱已存在")
 
-    # 检查用户名唯一性（排除当前用户）
     if "user_name" in update_data:
         existing_username = user_crud.get_by_username(db, update_data["user_name"])
         if existing_username and existing_username.id != current_user.id:
             raise UserAlreadyExistsError("用户名已存在")
 
-    # 处理status字段：保持布尔值
-    # status字段已经是布尔类型，不需要转换
-
-    # 更新用户基本信息
     updated_user = user_crud.update(db, current_user, update_data)
 
     return ApiResponse(
@@ -83,13 +74,11 @@ def change_current_user_password(
     db: Session = Depends(get_db),
 ):
     """修改当前登录用户的密码"""
-    # 验证当前密码
     if not verify_password(
         password_request.currentPassword, current_user.hashed_password
     ):
         raise HTTPException(status_code=400, detail="当前密码错误")
 
-    # 更新密码
     user_crud.update_password(db, current_user, password_request.newPassword)
 
     return ApiResponse(message="密码修改成功")

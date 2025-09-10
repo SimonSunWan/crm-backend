@@ -13,9 +13,6 @@ from app.schemas.role import RoleCreate, RoleResponse, RoleUpdate
 router = APIRouter()
 
 
-# 角色相关接口
-
-
 @router.get("/", response_model=ApiResponse)
 def get_roles(
     current: int = 1,
@@ -27,22 +24,14 @@ def get_roles(
     try:
         skip = (current - 1) * size
 
-        # 构建查询，过滤掉超级管理员角色
         query = db.query(role_crud.model).filter(role_crud.model.role_code != "SUPER")
 
-        # 如果提供了角色名称，添加过滤条件
         if role_name:
             query = query.filter(role_crud.model.role_name.contains(role_name))
 
-        # 获取总数
         total = query.count()
-
-        # 获取分页数据
         roles = query.offset(skip).limit(size).all()
-
-        # 转换为响应模型
         role_responses = [RoleResponse.model_validate(role) for role in roles]
-        # 返回包含分页信息的响应
         response_data = {
             "records": role_responses,
             "total": total,
@@ -59,14 +48,12 @@ def get_roles(
 def get_all_roles(db: Session = Depends(get_db)):
     """获取所有角色（不分页）"""
     try:
-        # 获取所有启用的角色，过滤掉超级管理员
         roles = (
             db.query(role_crud.model)
             .filter(role_crud.model.status, role_crud.model.role_code != "SUPER")
             .all()
         )
 
-        # 转换为响应模型
         role_responses = [RoleResponse.model_validate(role) for role in roles]
 
         return ApiResponse(data=role_responses)
@@ -88,13 +75,9 @@ def create_role(
         validate_role_name_uniqueness,
     )
 
-    # 检查角色名称是否已存在
     validate_role_name_uniqueness(db, role.role_name, role_crud)
-
-    # 检查角色编码是否已存在
     validate_role_code_uniqueness(db, role.role_code, role_crud)
 
-    # 创建角色数据并设置审计字段
     role_data = role.model_dump()
     created_role = create_with_audit(db, role_crud, role_data, current_user, "create")
 

@@ -14,29 +14,24 @@ from app.core.middleware import LoggingMiddleware, SecurityHeadersMiddleware
 from app.crud.user import user_crud
 from app.schemas.base import ApiResponse
 
-# 配置日志
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 启动时执行
     db = SessionLocal()
     try:
-        # 初始化角色数据
         from scripts.init_roles import init_roles
 
         init_roles()
 
-        # 启动系统码生成器
         import asyncio
 
         from scripts.system_code_generator import system_code_scheduler
 
         asyncio.create_task(system_code_scheduler())
 
-        # 检查是否已存在超级管理员
         from app.core.crud_helpers import get_or_create_default_admin
 
         get_or_create_default_admin(db, user_crud)
@@ -54,7 +49,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 先注册中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -63,12 +57,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 添加自定义中间件
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
 
-# 然后注册异常处理器
 @app.exception_handler(CRMException)
 async def crm_exception_handler(request: Request, exc: CRMException):
     """CRM自定义异常处理器"""
@@ -100,5 +92,4 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=500, content=error_response.model_dump())
 
 
-# 最后注册路由
 app.include_router(api_router, prefix=settings.API_PRE_STR)

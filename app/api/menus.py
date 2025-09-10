@@ -15,7 +15,6 @@ router = APIRouter()
 
 def menu_to_response(menu) -> MenuResponse:
     """将Menu对象转换为MenuResponse对象"""
-    # 处理角色关系转换
     roles_data = None
     if menu.roles:
         from app.schemas.menu import RoleResponseForMenu
@@ -31,7 +30,6 @@ def menu_to_response(menu) -> MenuResponse:
             }
             roles_data.append(RoleResponseForMenu.model_validate(role_dict))
 
-    # 构建菜单字典
     menu_dict = {
         "id": menu.id,
         "name": menu.name,
@@ -53,9 +51,6 @@ def menu_to_response(menu) -> MenuResponse:
     }
 
     return MenuResponse.model_validate(menu_dict)
-
-
-# 菜单相关接口
 
 
 @router.get("/", response_model=ApiResponse)

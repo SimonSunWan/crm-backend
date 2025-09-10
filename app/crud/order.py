@@ -27,13 +27,11 @@ class InternalOrderCRUD(CRUDBase[InternalOrder]):
 
         for attempt in range(max_retries):
             try:
-                # 使用数据库锁确保并发安全
-                with db.begin_nested():  # 使用嵌套事务
-                    # 查询并锁定相关记录
+                with db.begin_nested():
                     latest_order = (
                         db.query(self.model)
                         .filter(self.model.id.like(f"{prefix}%"))
-                        .with_for_update()  # 添加行级锁
+                        .with_for_update()
                         .order_by(desc(self.model.id))
                         .first()
                     )
@@ -46,14 +44,12 @@ class InternalOrderCRUD(CRUDBase[InternalOrder]):
 
                     order_id = f"{prefix}{new_num:04d}"
 
-                    # 验证ID唯一性（双重检查）
                     existing_order = (
                         db.query(self.model).filter(self.model.id == order_id).first()
                     )
                     if not existing_order:
                         return order_id
                     else:
-                        # ID已存在，等待一小段时间后重试
                         time.sleep(random.uniform(0.01, 0.05))
                         continue
 
@@ -62,11 +58,9 @@ class InternalOrderCRUD(CRUDBase[InternalOrder]):
                     raise CRMException(
                         status_code=500, detail=f"生成工单ID失败: {str(e)}"
                     )
-                # 等待后重试
                 time.sleep(random.uniform(0.01, 0.1))
                 continue
 
-        # 如果所有重试都失败，抛出异常
         raise CRMException(status_code=500, detail="生成工单ID失败，请稍后重试")
 
     def create(self, db: Session, obj_in: dict) -> InternalOrder:

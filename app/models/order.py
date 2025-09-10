@@ -40,7 +40,6 @@ class InternalOrder(Base, TimestampMixin):
     fault_description = Column(Text)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    # 关联详情记录
     details = relationship(
         "InternalOrderDetail", back_populates="order", cascade="all, delete-orphan"
     )
