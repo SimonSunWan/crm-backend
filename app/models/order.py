@@ -18,7 +18,7 @@ from app.models.base import TimestampMixin
 class InternalOrder(Base, TimestampMixin):
     """保内工单模型"""
 
-    __tablename__ = "internal_orders"
+    __tablename__ = "internal_order"
 
     id = Column(String, primary_key=True, index=True)
     customer = Column(String, nullable=False)
@@ -38,7 +38,7 @@ class InternalOrder(Base, TimestampMixin):
     pack_date = Column(Date)
     under_warranty = Column(Boolean, default=True)
     fault_description = Column(Text)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("user.id"), nullable=True)
 
     details = relationship(
         "InternalOrderDetail", back_populates="order", cascade="all, delete-orphan"
@@ -48,11 +48,11 @@ class InternalOrder(Base, TimestampMixin):
 class InternalOrderDetail(Base, TimestampMixin):
     """保内工单详情记录模型"""
 
-    __tablename__ = "internal_order_details"
+    __tablename__ = "internal_order_detail"
 
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(
-        String, ForeignKey("internal_orders.id"), nullable=False, index=True
+        String, ForeignKey("internal_order.id"), nullable=False, index=True
     )
 
     # 维修记录字段
@@ -78,7 +78,7 @@ class InternalOrderDetail(Base, TimestampMixin):
 class ExternalOrder(Base, TimestampMixin):
     """保外工单模型"""
 
-    __tablename__ = "external_orders"
+    __tablename__ = "external_order"
 
     id = Column(String, primary_key=True, index=True)
     customer = Column(String, nullable=False)
@@ -98,7 +98,7 @@ class ExternalOrder(Base, TimestampMixin):
     pack_date = Column(Date)
     under_warranty = Column(Boolean, default=False)
     fault_description = Column(Text)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("user.id"), nullable=True)
 
     # 关联详情记录
     details = relationship(
@@ -109,11 +109,11 @@ class ExternalOrder(Base, TimestampMixin):
 class ExternalOrderDetail(Base, TimestampMixin):
     """保外工单详情记录模型"""
 
-    __tablename__ = "external_order_details"
+    __tablename__ = "external_order_detail"
 
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(
-        String, ForeignKey("external_orders.id"), nullable=False, index=True
+        String, ForeignKey("external_order.id"), nullable=False, index=True
     )
 
     # 维修记录字段

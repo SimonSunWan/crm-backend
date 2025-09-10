@@ -8,7 +8,7 @@ from app.models.user_role import user_role
 
 class User(Base, TimestampMixin):
 
-    __tablename__ = "users"
+    __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
     status = Column(Boolean, default=True, nullable=True)  # 统一为Boolean类型

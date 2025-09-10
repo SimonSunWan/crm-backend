@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.core.crud import CRUDBase
-from app.models.system_settings import SystemSetting
+from app.models.system import SystemSetting
 
 
 class CRUDSystemSetting(CRUDBase[SystemSetting]):

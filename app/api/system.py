@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_superuser
 from app.core.exceptions import CRMException
-from app.crud.system_settings import system_setting_crud
+from app.crud.system import system_setting_crud
 from app.models.user import User
 from app.schemas.base import ApiResponse
-from app.schemas.system_settings import SystemSettingResponse
+from app.schemas.system import SystemSettingResponse
 
 router = APIRouter()
 

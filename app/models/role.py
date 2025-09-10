@@ -10,7 +10,7 @@ from app.models.user_role import user_role
 class Role(Base, TimestampMixin):
     """角色模型"""
 
-    __tablename__ = "roles"
+    __tablename__ = "role"
 
     id = Column(Integer, primary_key=True, index=True)
     role_name = Column(

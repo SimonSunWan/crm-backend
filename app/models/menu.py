@@ -9,7 +9,7 @@ from app.models.role_menu import role_menu
 class Menu(Base, TimestampMixin):
     """菜单模型"""
 
-    __tablename__ = "menus"
+    __tablename__ = "menu"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, comment="菜单名称")
@@ -25,7 +25,7 @@ class Menu(Base, TimestampMixin):
         String(20), default="menu", comment="菜单类型：menu-菜单，button-权限"
     )
     parent_id = Column(
-        Integer, ForeignKey("menus.id"), nullable=True, comment="父菜单ID"
+        Integer, ForeignKey("menu.id"), nullable=True, comment="父菜单ID"
     )
 
     # 权限相关字段

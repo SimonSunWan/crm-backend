@@ -7,7 +7,7 @@ from app.models.base import TimestampMixin
 class SystemSetting(Base, TimestampMixin):
     """系统配置表"""
 
-    __tablename__ = "system_settings"
+    __tablename__ = "system_setting"
 
     id = Column(Integer, primary_key=True, index=True)
     status = Column(Boolean, default=True)

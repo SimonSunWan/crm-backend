@@ -8,7 +8,7 @@ from app.models.base import TimestampMixin
 class DictionaryType(Base, TimestampMixin):
     """字典类型表"""
 
-    __tablename__ = "dic_types"
+    __tablename__ = "dic_type"
 
     id = Column(Integer, primary_key=True, index=True)
     status = Column(Boolean, default=True)
@@ -29,15 +29,15 @@ class DictionaryType(Base, TimestampMixin):
 class DictionaryEnum(Base, TimestampMixin):
     """字典枚举表"""
 
-    __tablename__ = "dic_enums"
+    __tablename__ = "dic_enum"
 
     id = Column(Integer, primary_key=True, index=True)
     status = Column(Boolean, default=True)
     type_id = Column(
-        Integer, ForeignKey("dic_types.id"), nullable=False, comment="字典类型ID"
+        Integer, ForeignKey("dic_type.id"), nullable=False, comment="字典类型ID"
     )
     parent_id = Column(
-        Integer, ForeignKey("dic_enums.id"), nullable=True, comment="父级枚举ID"
+        Integer, ForeignKey("dic_enum.id"), nullable=True, comment="父级枚举ID"
     )
     key_value = Column(String, nullable=False, comment="键值")
     dict_value = Column(String, nullable=False, comment="字典值")

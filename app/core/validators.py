@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import InvalidSystemCodeError, UserAlreadyExistsError
-from app.crud.system_settings import system_setting_crud
+from app.crud.system import system_setting_crud
 
 
 def validate_system_code(
