@@ -31,28 +31,8 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(system_code_scheduler())
         
         # 检查是否已存在超级管理员
-        existing_admin = db.query(user_crud.model).filter(
-            user_crud.model.user_name == "Super"
-        ).first()
-        
-        if not existing_admin:
-            # 创建默认超级管理员
-            admin_data = {
-                "email": "super@example.com",
-                "phone": "18888888888",
-                "user_name": "Super",
-                "nick_name": "超级管理员",
-                "password": "Super@3000",
-                "status": 1
-            }
-            created_user = user_crud.create(db, admin_data)
-            
-            # 为超级管理员分配SUPER角色
-            from app.models.role import Role
-            super_role = db.query(Role).filter(Role.role_code == "SUPER").first()
-            if super_role and created_user:
-                created_user.roles.append(super_role)
-                db.commit()
+        from app.core.crud_helpers import get_or_create_default_admin
+        get_or_create_default_admin(db, user_crud)
     finally:
         db.close()
     

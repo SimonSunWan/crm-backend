@@ -80,25 +80,21 @@ def create_role(
     db: Session = Depends(get_db)
 ):
     """创建角色"""
-    try:
-        # 检查角色名称是否已存在
-        if role_crud.get_by_name(db, role.role_name):
-            raise HTTPException(status_code=400, detail="角色名称已存在")
-        
-        # 检查角色编码是否已存在
-        if role_crud.get_by_code(db, role.role_code):
-            raise HTTPException(status_code=400, detail="角色编码已存在")
-        
-        # 创建角色数据
-        role_data = role.model_dump()
-        role_data["created_by"] = current_user.user_name
-        
-        created_role = role_crud.create(db, role_data)
-        return ApiResponse(message="角色创建成功", data=RoleResponse.model_validate(created_role))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"创建角色失败: {str(e)}")
+    from app.core.validators import validate_role_name_uniqueness, validate_role_code_uniqueness
+    from app.core.response_helpers import success_response
+    from app.core.crud_helpers import create_with_audit
+    
+    # 检查角色名称是否已存在
+    validate_role_name_uniqueness(db, role.role_name, role_crud)
+    
+    # 检查角色编码是否已存在
+    validate_role_code_uniqueness(db, role.role_code, role_crud)
+    
+    # 创建角色数据并设置审计字段
+    role_data = role.model_dump()
+    created_role = create_with_audit(db, role_crud, role_data, current_user, "create")
+    
+    return success_response("角色创建成功", RoleResponse.model_validate(created_role))
 
 
 @router.get("/{role_id}", response_model=ApiResponse)
@@ -121,31 +117,25 @@ def update_role(
     db: Session = Depends(get_db)
 ):
     """更新角色"""
-    try:
-        role = role_crud.get_or_404(db, role_id, "角色未找到")
-        
-        # 检查更新的角色名称是否与其他角色冲突
-        if role_update.role_name and role_update.role_name != role.role_name:
-            existing_role = role_crud.get_by_name(db, role_update.role_name)
-            if existing_role and existing_role.id != role_id:
-                raise HTTPException(status_code=400, detail="角色名称已存在")
-        
-        # 检查更新的角色编码是否与其他角色冲突
-        if role_update.role_code and role_update.role_code != role.role_code:
-            existing_role = role_crud.get_by_code(db, role_update.role_code)
-            if existing_role and existing_role.id != role_id:
-                raise HTTPException(status_code=400, detail="角色编码已存在")
-        
-        # 更新角色数据
-        update_data = role_update.model_dump(exclude_unset=True)
-        update_data["updated_by"] = current_user.user_name
-        
-        updated_role = role_crud.update(db, role, update_data)
-        return ApiResponse(message="角色更新成功", data=RoleResponse.model_validate(updated_role))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"更新角色失败: {str(e)}")
+    from app.core.validators import validate_role_name_uniqueness, validate_role_code_uniqueness
+    from app.core.response_helpers import success_response
+    from app.core.crud_helpers import update_with_audit
+    
+    role = role_crud.get_or_404(db, role_id, "角色未找到")
+    
+    # 检查更新的角色名称是否与其他角色冲突
+    if role_update.role_name and role_update.role_name != role.role_name:
+        validate_role_name_uniqueness(db, role_update.role_name, role_crud, role_id)
+    
+    # 检查更新的角色编码是否与其他角色冲突
+    if role_update.role_code and role_update.role_code != role.role_code:
+        validate_role_code_uniqueness(db, role_update.role_code, role_crud, role_id)
+    
+    # 更新角色数据并设置审计字段
+    update_data = role_update.model_dump(exclude_unset=True)
+    updated_role = update_with_audit(db, role_crud, role, update_data, current_user, "update")
+    
+    return success_response("角色更新成功", RoleResponse.model_validate(updated_role))
 
 
 @router.delete("/{role_id}", response_model=ApiResponse)

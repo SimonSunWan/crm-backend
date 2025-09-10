@@ -30,9 +30,9 @@ async def update_system_code():
                 update_by="system"
             )
             if updated_setting:
-                print(f"[{datetime.now()}] 系统码已更新为: {new_code}")
+                pass
             else:
-                print(f"[{datetime.now()}] 系统码更新失败")
+                pass
         else:
             # 如果不存在，创建系统码配置
             system_code_data = {
@@ -45,19 +45,18 @@ async def update_system_code():
             }
             created_setting = system_setting_crud.create(db, system_code_data)
             if created_setting:
-                print(f"[{datetime.now()}] 系统码配置已创建，系统码为: {new_code}")
+                pass
             else:
-                print(f"[{datetime.now()}] 系统码配置创建失败")
+                pass
                 
     except Exception as e:
-        print(f"[{datetime.now()}] 系统码更新异常: {str(e)}")
+        pass
     finally:
         db.close()
 
 
 async def system_code_scheduler():
     """系统码定时更新任务"""
-    print(f"[{datetime.now()}] 系统码定时更新任务启动")
     
     # 立即执行一次
     await update_system_code()

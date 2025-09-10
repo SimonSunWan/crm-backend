@@ -20,7 +20,6 @@ def init_menus():
         # 检查是否已有菜单数据
         existing_menus = db.query(Menu).count()
         if existing_menus > 0:
-            print("菜单数据已存在，跳过初始化")
             return
 
         # 创建基础菜单数据
@@ -148,17 +147,13 @@ def init_menus():
 
         # 提交事务
         db.commit()
-        print(f"成功初始化 {len(menus_data)} 条菜单数据")
 
     except Exception as e:
         db.rollback()
-        print(f"初始化菜单数据失败: {e}")
         raise
     finally:
         db.close()
 
 
 if __name__ == "__main__":
-    print("开始初始化菜单数据...")
     init_menus()
-    print("菜单数据初始化完成")

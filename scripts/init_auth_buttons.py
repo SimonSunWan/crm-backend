@@ -20,7 +20,6 @@ def init_auth_buttons():
         # 检查是否已有权限按钮数据
         existing_auth_buttons = db.query(Menu).filter(Menu.menu_type == "button").count()
         if existing_auth_buttons > 0:
-            print("权限按钮数据已存在，跳过初始化")
             return
 
         # 获取现有的菜单，为它们添加权限按钮
@@ -96,17 +95,13 @@ def init_auth_buttons():
 
         # 提交事务
         db.commit()
-        print(f"成功初始化 {len(auth_buttons_data)} 条权限按钮数据")
 
     except Exception as e:
         db.rollback()
-        print(f"初始化权限按钮数据失败: {e}")
         raise
     finally:
         db.close()
 
 
 if __name__ == "__main__":
-    print("开始初始化权限按钮数据...")
     init_auth_buttons()
-    print("权限按钮数据初始化完成")

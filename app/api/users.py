@@ -160,11 +160,11 @@ def get_users(
 @router.post("/register", response_model=ApiResponse)
 def register_user(user: UserRegister, db: Session = Depends(get_db)):
     """用户注册"""
+    from app.core.validators import validate_system_code
+    from app.core.response_helpers import success_response, normalize_empty_strings
+    
     # 校验系统码
-    from app.crud.system_settings import system_setting_crud
-    system_code_setting = system_setting_crud.get_by_key(db, setting_key="REGISTER_SYSTEM_CODE")
-    if not system_code_setting or system_code_setting.setting_value != user.system_code:
-        raise InvalidSystemCodeError("系统码错误")
+    validate_system_code(db, user.system_code)
     
     # 准备用户数据
     user_data = {
@@ -173,14 +173,17 @@ def register_user(user: UserRegister, db: Session = Depends(get_db)):
         'phone': user.phone,
         'email': user.email,
         'password': user.password,
-        'status': '2',  # 默认未开启状态
+        'status': False,  # 默认未开启状态
         'roles': []  # 角色为空
     }
+    
+    # 将空字符串转换为None
+    user_data = normalize_empty_strings(user_data, ['email'])
     
     # 创建用户
     created_user = user_crud.create(db, user_data)
     
-    return ApiResponse(message="注册成功，请等待管理员审核", data=UserResponse.model_validate(created_user))
+    return success_response("注册成功，请等待管理员审核", UserResponse.model_validate(created_user))
 
 
 @router.post("/", response_model=ApiResponse)
@@ -190,39 +193,30 @@ def create_user(
     current_user: User = Depends(get_current_superuser)
 ):
     """创建用户（需要超级管理员权限）"""
+    from app.core.response_helpers import success_response, normalize_empty_strings
+    from app.core.crud_helpers import create_with_audit, handle_user_role_association
+    
     # 处理角色数据
     user_data = user.model_dump()
     role_codes = user_data.pop('roles', []) if isinstance(user_data.get('roles'), list) else []
     
     # 将空字符串转换为None，避免唯一约束冲突
-    if 'email' in user_data and user_data['email'] == '':
-        user_data['email'] = None
+    user_data = normalize_empty_strings(user_data, ['email'])
     
     # 检查是否尝试创建超级管理员用户
     if 'SUPER' in role_codes:
         raise SuperAdminOperationError("不允许创建超级管理员用户")
     
-    # 处理status字段：保持布尔值
-    # status字段已经是布尔类型，不需要转换
-    
-    # 设置创建者
-    user_data["created_by"] = current_user.user_name
-    
-    # 创建用户
-    created_user = user_crud.create(db, user_data)
+    # 创建用户并设置审计字段
+    created_user = create_with_audit(db, user_crud, user_data, current_user, "create")
     
     # 如果提供了角色编码，建立用户角色关联
     if role_codes:
-        from app.models.role import Role
-        roles = db.query(Role).filter(Role.role_code.in_(role_codes)).all()
-        if roles:
-            # 重新获取用户对象以确保它是有效的SQLAlchemy实例
-            user_instance = db.query(User).filter(User.id == created_user.id).first()
-            if user_instance:
-                user_instance.roles.extend(roles)
-                db.commit()
+        user_instance = db.query(User).filter(User.id == created_user.id).first()
+        if user_instance:
+            handle_user_role_association(db, user_instance, role_codes, "assign")
     
-    return ApiResponse(message="用户创建成功", data=UserResponse.model_validate(created_user))
+    return success_response("用户创建成功", UserResponse.model_validate(created_user))
 
 
 @router.get("/{user_id}", response_model=ApiResponse)
@@ -309,11 +303,11 @@ def delete_user(
 @router.post("/forget-password", response_model=ApiResponse)
 def forget_password(data: UserForgetPassword, db: Session = Depends(get_db)):
     """忘记密码重置"""
+    from app.core.validators import validate_system_code
+    from app.core.response_helpers import success_response
+    
     # 校验系统码
-    from app.crud.system_settings import system_setting_crud
-    system_code_setting = system_setting_crud.get_by_key(db, setting_key="REGISTER_SYSTEM_CODE")
-    if not system_code_setting or system_code_setting.setting_value != data.system_code:
-        raise InvalidSystemCodeError("系统码错误")
+    validate_system_code(db, data.system_code)
     
     # 查找用户
     user = user_crud.get_by_username(db, data.username)
@@ -323,4 +317,4 @@ def forget_password(data: UserForgetPassword, db: Session = Depends(get_db)):
     # 更新密码
     user_crud.update_password(db, user, data.new_password)
     
-    return ApiResponse(message="密码重置成功")
+    return success_response("密码重置成功")

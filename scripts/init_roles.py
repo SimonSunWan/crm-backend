@@ -20,7 +20,6 @@ def init_roles():
         # 检查是否已有角色数据
         existing_roles = db.query(Role).count()
         if existing_roles > 0:
-            print("角色数据已存在，跳过初始化")
             return
 
         # 创建基础角色数据
@@ -54,10 +53,8 @@ def init_roles():
             db.add(role)
 
         db.commit()
-        print(f"成功初始化 {len(roles_data)} 条角色数据")
         
     except Exception as e:
-        print(f"初始化角色数据失败: {str(e)}")
         db.rollback()
     finally:
         db.close()
