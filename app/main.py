@@ -79,9 +79,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """全局异常处理器"""
     logger.error(f"全局异常: {exc}")
     logger.error(f"异常详情: {traceback.format_exc()}")
-    error_response = ApiResponse(
-        code=500, message=f"服务器内部错误: {str(exc)}", data=None
-    )
+    error_response = ApiResponse(code=500, message="操作失败", data=None)
     return JSONResponse(status_code=500, content=error_response.model_dump())
 
 

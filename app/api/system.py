@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_superuser
 from app.core.exceptions import CRMException
+from app.core.messages import Messages, success_response
 from app.crud.system import system_setting_crud
 from app.models.user import User
 from app.schemas.base import ApiResponse
@@ -24,4 +25,4 @@ def get_system_setting(
         raise CRMException(status_code=404, detail="系统配置不存在")
 
     setting_data = SystemSettingResponse.model_validate(setting)
-    return ApiResponse(message="获取系统配置成功", data=setting_data)
+    return success_response(message=Messages.SYSTEM_CONFIG_SUCCESS, data=setting_data)

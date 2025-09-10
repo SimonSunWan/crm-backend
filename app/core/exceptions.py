@@ -10,7 +10,7 @@ class CRMException(HTTPException):
 class UserNotFoundError(CRMException):
     """用户未找到异常"""
 
-    def __init__(self, detail: str = "用户未找到"):
+    def __init__(self, detail: str = "用户不存在"):
         super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
 
 
@@ -38,14 +38,14 @@ class InsufficientPermissionsError(CRMException):
 class InvalidTokenError(CRMException):
     """无效令牌异常"""
 
-    def __init__(self, detail: str = "无效的认证令牌"):
+    def __init__(self, detail: str = "认证失败"):
         super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
 
 
 class UserDisabledError(CRMException):
     """用户被禁用异常"""
 
-    def __init__(self, detail: str = "用户已被禁用"):
+    def __init__(self, detail: str = "用户已禁用"):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
@@ -59,5 +59,26 @@ class InvalidSystemCodeError(CRMException):
 class SuperAdminOperationError(CRMException):
     """超级管理员操作异常"""
 
-    def __init__(self, detail: str = "不允许对超级管理员进行操作"):
+    def __init__(self, detail: str = "不允许操作超级管理员"):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
+class RecordNotFoundError(CRMException):
+    """记录未找到异常"""
+
+    def __init__(self, detail: str = "记录不存在"):
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+
+class DuplicateRecordError(CRMException):
+    """重复记录异常"""
+
+    def __init__(self, detail: str = "记录已存在"):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
+class ValidationError(CRMException):
+    """验证错误异常"""
+
+    def __init__(self, detail: str = "数据验证失败"):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)

@@ -5,21 +5,6 @@ from typing import Any, Dict, List
 from fastapi import HTTPException
 
 from app.models.user import User
-from app.schemas.base import ApiResponse
-
-
-def success_response(
-    message: str = "操作成功", data: Any = None, code: int = 200
-) -> ApiResponse:
-    """创建成功响应"""
-    return ApiResponse(code=code, message=message, data=data)
-
-
-def error_response(
-    message: str = "操作失败", code: int = 500, data: Any = None
-) -> ApiResponse:
-    """创建错误响应"""
-    return ApiResponse(code=code, message=message, data=data)
 
 
 def handle_api_exception(func):
@@ -31,9 +16,7 @@ def handle_api_exception(func):
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"{func.__name__}失败: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=f"操作失败: {str(e)}")
 
     return wrapper
 

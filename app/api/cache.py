@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
+from app.core.messages import Messages, success_response
 from app.core.redis_client import cache_manager, redis_client
 from app.schemas.base import ApiResponse
 
@@ -15,7 +16,7 @@ def health_check():
         "cache_enabled": redis_client.is_connected(),
     }
 
-    return ApiResponse(data=health_data)
+    return success_response(data=health_data)
 
 
 @router.get("/cache/stats", response_model=ApiResponse)
@@ -37,7 +38,7 @@ def cache_stats():
             "uptime_in_seconds": info.get("uptime_in_seconds", 0),
         }
 
-        return ApiResponse(data=stats)
+        return success_response(data=stats)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取缓存统计失败: {str(e)}")
 
@@ -52,7 +53,7 @@ def clear_cache():
         redis_client_instance = redis_client.client
         redis_client_instance.flushdb()
 
-        return ApiResponse(message="缓存清除成功")
+        return success_response(message=Messages.CACHE_CLEAR_SUCCESS)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"清除缓存失败: {str(e)}")
 
@@ -66,8 +67,8 @@ def clear_cache_pattern(pattern: str):
     try:
         deleted_count = cache_manager.delete_pattern(pattern)
 
-        return ApiResponse(
-            message="缓存清除成功",
+        return success_response(
+            message=Messages.CACHE_CLEAR_SUCCESS,
             data={"pattern": pattern, "deleted_count": deleted_count},
         )
     except Exception as e:
