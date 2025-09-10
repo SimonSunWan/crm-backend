@@ -1,11 +1,12 @@
 from typing import List, Union
+
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     """应用配置类"""
-    
+
     PROJECT_NAME: str = "crm-backend"
     VERSION: str = "1.0.0"
     DESCRIPTION: str = "CRM后端系统"
@@ -25,7 +26,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     SECRET_KEY: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 4  # 4 hours
 
     model_config = {"case_sensitive": True, "env_file": ".env"}
 

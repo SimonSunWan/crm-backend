@@ -1,5 +1,6 @@
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
-from typing import Optional, List
 
 
 class DictionaryTypeBase(BaseModel):
@@ -29,11 +30,11 @@ class DictionaryTypeResponse(DictionaryTypeBase):
 
 
 class DictionaryEnumBase(BaseModel):
-    type_id: int = Field(alias='typeId')
-    parent_id: Optional[int] = Field(default=None, alias='parentId')
-    key_value: str = Field(alias='keyValue')
-    dict_value: str = Field(alias='dictValue')
-    sort_order: Optional[int] = Field(default=0, alias='sortOrder')
+    type_id: int = Field(alias="typeId")
+    parent_id: Optional[int] = Field(default=None, alias="parentId")
+    key_value: str = Field(alias="keyValue")
+    dict_value: str = Field(alias="dictValue")
+    sort_order: Optional[int] = Field(default=0, alias="sortOrder")
     level: Optional[int] = Field(default=1)
     path: Optional[str] = None
 
@@ -46,10 +47,10 @@ class DictionaryEnumCreate(DictionaryEnumBase):
 
 
 class DictionaryEnumUpdate(BaseModel):
-    parent_id: Optional[int] = Field(default=None, alias='parentId')
-    key_value: Optional[str] = Field(default=None, alias='keyValue')
-    dict_value: Optional[str] = Field(default=None, alias='dictValue')
-    sort_order: Optional[int] = Field(default=None, alias='sortOrder')
+    parent_id: Optional[int] = Field(default=None, alias="parentId")
+    key_value: Optional[str] = Field(default=None, alias="keyValue")
+    dict_value: Optional[str] = Field(default=None, alias="dictValue")
+    sort_order: Optional[int] = Field(default=None, alias="sortOrder")
     level: Optional[int] = None
     path: Optional[str] = None
     status: Optional[bool] = None
@@ -61,7 +62,7 @@ class DictionaryEnumUpdate(BaseModel):
 class DictionaryEnumResponse(DictionaryEnumBase):
     id: int
     status: bool
-    children: Optional[List['DictionaryEnumResponse']] = []
+    children: Optional[List["DictionaryEnumResponse"]] = []
     hasChildren: Optional[bool] = False
 
     class Config:

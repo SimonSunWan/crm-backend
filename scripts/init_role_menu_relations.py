@@ -4,13 +4,14 @@
 用于建立超级管理员角色与所有菜单的关联关系
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal
-from app.models.role import Role
 from app.models.menu import Menu
+from app.models.role import Role
 
 
 def init_role_menu_relations():
@@ -34,10 +35,10 @@ def init_role_menu_relations():
 
         # 建立超级管理员与所有菜单的关联关系
         super_role.menus.extend(all_menus)
-        
+
         db.commit()
-        
-    except Exception as e:
+
+    except Exception:
         db.rollback()
     finally:
         db.close()

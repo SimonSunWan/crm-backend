@@ -1,5 +1,7 @@
+from typing import List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
+
 from app.schemas.base import CamelCaseModel
 
 
@@ -14,6 +16,7 @@ class RoleResponseForMenu(BaseModel):
 
 class MenuBase(CamelCaseModel):
     """菜单基础模型"""
+
     name: str
     path: Optional[str] = None
     icon: Optional[str] = None
@@ -31,6 +34,7 @@ class MenuBase(CamelCaseModel):
 
 class MenuCreate(CamelCaseModel):
     """创建菜单模型"""
+
     name: str
     path: Optional[str] = None
     icon: Optional[str] = None
@@ -47,6 +51,7 @@ class MenuCreate(CamelCaseModel):
 
 class MenuUpdate(CamelCaseModel):
     """更新菜单模型"""
+
     name: Optional[str] = None
     path: Optional[str] = None
     icon: Optional[str] = None
@@ -63,10 +68,11 @@ class MenuUpdate(CamelCaseModel):
 
 class MenuResponse(MenuBase):
     """菜单响应模型"""
+
     id: int
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
-    children: Optional[List['MenuResponse']] = None
+    children: Optional[List["MenuResponse"]] = None
 
 
 # 解决循环引用

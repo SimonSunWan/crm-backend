@@ -4,8 +4,9 @@
 用于在数据库创建后插入基础的角色数据
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal
@@ -28,22 +29,22 @@ def init_roles():
                 "role_code": "SUPER",
                 "description": "系统超级管理员，拥有所有权限",
                 "status": True,
-                "create_by": "system"
+                "create_by": "system",
             },
             {
                 "role_name": "管理员",
                 "role_code": "ADMIN",
                 "description": "系统管理员，拥有大部分权限",
                 "status": True,
-                "create_by": "system"
+                "create_by": "system",
             },
             {
                 "role_name": "普通用户",
                 "role_code": "USER",
                 "description": "普通用户，拥有基本权限",
                 "status": True,
-                "create_by": "system"
-            }
+                "create_by": "system",
+            },
         ]
 
         # 插入角色数据
@@ -52,8 +53,8 @@ def init_roles():
             db.add(role)
 
         db.commit()
-        
-    except Exception as e:
+
+    except Exception:
         db.rollback()
     finally:
         db.close()

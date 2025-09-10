@@ -4,8 +4,9 @@
 用于为菜单创建对应的权限按钮数据
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal
@@ -17,17 +18,19 @@ def init_menu_auth_buttons():
     db = SessionLocal()
     try:
         # 检查是否已有权限按钮数据
-        existing_auth_buttons = db.query(Menu).filter(Menu.menu_type == "button").count()
+        existing_auth_buttons = (
+            db.query(Menu).filter(Menu.menu_type == "button").count()
+        )
         if existing_auth_buttons > 0:
             db.query(Menu).filter(Menu.menu_type == "button").delete()
             db.commit()
 
         # 获取所有菜单类型的菜单
         menu_items = db.query(Menu).filter(Menu.menu_type == "menu").all()
-        
+
         # 为每个菜单创建权限按钮
         auth_buttons_data = []
-        
+
         for menu in menu_items:
             # 为每个菜单创建基础的权限按钮
             auth_buttons = [
@@ -43,7 +46,7 @@ def init_menu_auth_buttons():
                     "roles": menu.roles,
                     "auth_name": "新增",
                     "auth_mark": "add",
-                    "auth_sort": 1
+                    "auth_sort": 1,
                 },
                 {
                     "name": f"{menu.name}_edit",
@@ -57,7 +60,7 @@ def init_menu_auth_buttons():
                     "roles": menu.roles,
                     "auth_name": "编辑",
                     "auth_mark": "edit",
-                    "auth_sort": 2
+                    "auth_sort": 2,
                 },
                 {
                     "name": f"{menu.name}_delete",
@@ -71,27 +74,29 @@ def init_menu_auth_buttons():
                     "roles": menu.roles,
                     "auth_name": "删除",
                     "auth_mark": "delete",
-                    "auth_sort": 3
-                }
+                    "auth_sort": 3,
+                },
             ]
-            
+
             # 为特定菜单添加额外的权限按钮
             if menu.name == "Menus":  # 菜单管理
-                auth_buttons.append({
-                    "name": f"{menu.name}_permission",
-                    "path": f"{menu.path}/permission",
-                    "component": "",
-                    "title": "菜单权限",
-                    "icon": "",
-                    "sort": 4,
-                    "menu_type": "button",
-                    "parent_id": menu.id,
-                    "roles": menu.roles,
-                    "auth_name": "菜单权限",
-                    "auth_mark": "permission",
-                    "auth_sort": 4
-                })
-            
+                auth_buttons.append(
+                    {
+                        "name": f"{menu.name}_permission",
+                        "path": f"{menu.path}/permission",
+                        "component": "",
+                        "title": "菜单权限",
+                        "icon": "",
+                        "sort": 4,
+                        "menu_type": "button",
+                        "parent_id": menu.id,
+                        "roles": menu.roles,
+                        "auth_name": "菜单权限",
+                        "auth_mark": "permission",
+                        "auth_sort": 4,
+                    }
+                )
+
             auth_buttons_data.extend(auth_buttons)
 
         # 插入权限按钮数据
@@ -102,7 +107,7 @@ def init_menu_auth_buttons():
         # 提交事务
         db.commit()
 
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise
     finally:

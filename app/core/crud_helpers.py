@@ -2,21 +2,21 @@
 公共CRUD操作函数
 提供通用的CRUD操作辅助函数
 """
+
 from typing import Any, Dict, List
+
 from sqlalchemy.orm import Session
-from app.models.user import User
+
 from app.models.role import Role
+from app.models.user import User
 
 
 def handle_user_role_association(
-    db: Session, 
-    user: User, 
-    role_codes: List[str], 
-    operation: str = "assign"
+    db: Session, user: User, role_codes: List[str], operation: str = "assign"
 ) -> None:
     """
     处理用户角色关联
-    
+
     Args:
         db: 数据库会话
         user: 用户对象
@@ -37,22 +37,23 @@ def create_with_audit(
     crud,
     data: Dict[str, Any],
     current_user: User,
-    operation: str = "create"
+    operation: str = "create",
 ) -> Any:
     """
     创建记录并设置审计字段
-    
+
     Args:
         db: 数据库会话
         crud: CRUD对象
         data: 数据字典
         current_user: 当前用户
         operation: 操作类型
-        
+
     Returns:
         创建的记录对象
     """
     from app.core.response_helpers import set_audit_fields
+
     data = set_audit_fields(data, current_user, operation)
     return crud.create(db, data)
 
@@ -63,11 +64,11 @@ def update_with_audit(
     record: Any,
     data: Dict[str, Any],
     current_user: User,
-    operation: str = "update"
+    operation: str = "update",
 ) -> Any:
     """
     更新记录并设置审计字段
-    
+
     Args:
         db: 数据库会话
         crud: CRUD对象
@@ -75,11 +76,12 @@ def update_with_audit(
         data: 数据字典
         current_user: 当前用户
         operation: 操作类型
-        
+
     Returns:
         更新的记录对象
     """
     from app.core.response_helpers import set_audit_fields
+
     data = set_audit_fields(data, current_user, operation)
     return crud.update(db, record, data)
 
@@ -89,18 +91,18 @@ def validate_and_create(
     crud,
     data: Dict[str, Any],
     current_user: User,
-    validators: List[callable] = None
+    validators: List[callable] = None,
 ) -> Any:
     """
     验证并创建记录
-    
+
     Args:
         db: 数据库会话
         crud: CRUD对象
         data: 数据字典
         current_user: 当前用户
         validators: 验证函数列表
-        
+
     Returns:
         创建的记录对象
     """
@@ -108,7 +110,7 @@ def validate_and_create(
     if validators:
         for validator in validators:
             validator(db, data)
-    
+
     return create_with_audit(db, crud, data, current_user, "create")
 
 
@@ -118,11 +120,11 @@ def validate_and_update(
     record: Any,
     data: Dict[str, Any],
     current_user: User,
-    validators: List[callable] = None
+    validators: List[callable] = None,
 ) -> Any:
     """
     验证并更新记录
-    
+
     Args:
         db: 数据库会话
         crud: CRUD对象
@@ -130,7 +132,7 @@ def validate_and_update(
         data: 数据字典
         current_user: 当前用户
         validators: 验证函数列表
-        
+
     Returns:
         更新的记录对象
     """
@@ -138,27 +140,27 @@ def validate_and_update(
     if validators:
         for validator in validators:
             validator(db, data, record.id)
-    
+
     return update_with_audit(db, crud, record, data, current_user, "update")
 
 
 def build_filter_query(query, filters: Dict[str, Any]) -> Any:
     """
     构建过滤查询
-    
+
     Args:
         query: SQLAlchemy查询对象
         filters: 过滤条件字典
-        
+
     Returns:
         过滤后的查询对象
     """
     for field, value in filters.items():
         if value is not None:
-            if hasattr(query.column_descriptions[0]['entity'], field):
-                column = getattr(query.column_descriptions[0]['entity'], field)
+            if hasattr(query.column_descriptions[0]["entity"], field):
+                column = getattr(query.column_descriptions[0]["entity"], field)
                 if isinstance(value, str):
-                    query = query.filter(column.ilike(f'%{value}%'))
+                    query = query.filter(column.ilike(f"%{value}%"))
                 else:
                     query = query.filter(column == value)
     return query
@@ -167,19 +169,19 @@ def build_filter_query(query, filters: Dict[str, Any]) -> Any:
 def get_or_create_default_admin(db: Session, user_crud) -> User:
     """
     获取或创建默认超级管理员
-    
+
     Args:
         db: 数据库会话
         user_crud: 用户CRUD对象
-        
+
     Returns:
         超级管理员用户对象
     """
     # 检查是否已存在超级管理员
-    existing_admin = db.query(user_crud.model).filter(
-        user_crud.model.user_name == "Super"
-    ).first()
-    
+    existing_admin = (
+        db.query(user_crud.model).filter(user_crud.model.user_name == "Super").first()
+    )
+
     if not existing_admin:
         # 创建默认超级管理员
         admin_data = {
@@ -189,16 +191,16 @@ def get_or_create_default_admin(db: Session, user_crud) -> User:
             "nick_name": "超级管理员",
             "password": "Super@3000",
             "status": True,
-            "created_by": "system"
+            "created_by": "system",
         }
         created_user = user_crud.create(db, admin_data)
-        
+
         # 为超级管理员分配SUPER角色
         super_role = db.query(Role).filter(Role.role_code == "SUPER").first()
         if super_role and created_user:
             created_user.roles.append(super_role)
             db.commit()
-        
+
         return created_user
-    
+
     return existing_admin

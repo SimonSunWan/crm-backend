@@ -1,20 +1,23 @@
+import logging
+import traceback
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, HTTPException
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.core.config import settings
+
 from app.api.api import api_router
+from app.core.config import settings
 from app.core.database import SessionLocal
-from app.crud.user import user_crud
-from app.schemas.base import ApiResponse
 from app.core.exceptions import CRMException
 from app.core.middleware import LoggingMiddleware, SecurityHeadersMiddleware
-import traceback
-import logging
+from app.crud.user import user_crud
+from app.schemas.base import ApiResponse
 
 # 配置日志
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,19 +26,23 @@ async def lifespan(app: FastAPI):
     try:
         # 初始化角色数据
         from scripts.init_roles import init_roles
+
         init_roles()
-        
+
         # 启动系统码生成器
         import asyncio
+
         from scripts.system_code_generator import system_code_scheduler
+
         asyncio.create_task(system_code_scheduler())
-        
+
         # 检查是否已存在超级管理员
         from app.core.crud_helpers import get_or_create_default_admin
+
         get_or_create_default_admin(db, user_crud)
     finally:
         db.close()
-    
+
     yield
 
 
@@ -60,34 +67,27 @@ app.add_middleware(
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
+
 # 然后注册异常处理器
 @app.exception_handler(CRMException)
 async def crm_exception_handler(request: Request, exc: CRMException):
     """CRM自定义异常处理器"""
     logger.error(f"CRM异常: {exc.status_code} - {exc.detail}")
-    error_response = ApiResponse(
-        code=exc.status_code,
-        message=exc.detail,
-        data=None
-    )
+    error_response = ApiResponse(code=exc.status_code, message=exc.detail, data=None)
     return JSONResponse(
-        status_code=exc.status_code,
-        content=error_response.model_dump()
+        status_code=exc.status_code, content=error_response.model_dump()
     )
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """HTTP异常处理器"""
     logger.error(f"HTTP异常: {exc.status_code} - {exc.detail}")
-    error_response = ApiResponse(
-        code=exc.status_code,
-        message=exc.detail,
-        data=None
-    )
+    error_response = ApiResponse(code=exc.status_code, message=exc.detail, data=None)
     return JSONResponse(
-        status_code=exc.status_code,
-        content=error_response.model_dump()
+        status_code=exc.status_code, content=error_response.model_dump()
     )
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -95,14 +95,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"全局异常: {exc}")
     logger.error(f"异常详情: {traceback.format_exc()}")
     error_response = ApiResponse(
-        code=500,
-        message=f"服务器内部错误: {str(exc)}",
-        data=None
+        code=500, message=f"服务器内部错误: {str(exc)}", data=None
     )
-    return JSONResponse(
-        status_code=500,
-        content=error_response.model_dump()
-    )
+    return JSONResponse(status_code=500, content=error_response.model_dump())
+
 
 # 最后注册路由
 app.include_router(api_router, prefix=settings.API_PRE_STR)

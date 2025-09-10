@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+
 from app.core.config import settings
 from app.core.exceptions import UserDisabledError
 from app.models.user import User
@@ -26,7 +28,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
     return encoded_jwt
@@ -48,13 +52,13 @@ def authenticate_user(db: Session, user_name: str, password: str) -> Optional[Us
         return None
     if not verify_password(password, user.hashed_password):
         return None
-    
+
     # 检查用户是否有启用的角色
     if user.roles:
         enabled_roles = [role for role in user.roles if role.status]
         if not enabled_roles:
             raise UserDisabledError("您的所有角色已被禁用，无法登录系统")
-    
+
     return user
 
 

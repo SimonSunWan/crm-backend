@@ -4,8 +4,9 @@
 用于在数据库创建后插入基础的菜单数据
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.database import SessionLocal
@@ -33,7 +34,7 @@ def init_menus():
                 "sort": 1,
                 "menu_type": "menu",
                 "parent_id": None,
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "Console",
@@ -44,7 +45,7 @@ def init_menus():
                 "sort": 1,
                 "menu_type": "menu",
                 "parent_id": 1,  # Dashboard的子菜单
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             # 系统管理
             {
@@ -56,7 +57,7 @@ def init_menus():
                 "sort": 2,
                 "menu_type": "menu",
                 "parent_id": None,
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "User",
@@ -67,7 +68,7 @@ def init_menus():
                 "sort": 1,
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "Role",
@@ -78,7 +79,7 @@ def init_menus():
                 "sort": 2,
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "UserCenter",
@@ -90,7 +91,7 @@ def init_menus():
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
                 "is_hide": False,
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "Menus",
@@ -101,7 +102,7 @@ def init_menus():
                 "sort": 4,
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "Dictionary",
@@ -112,7 +113,7 @@ def init_menus():
                 "sort": 5,
                 "menu_type": "menu",
                 "parent_id": 3,  # System的子菜单
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             # 客户管理
             {
@@ -124,7 +125,7 @@ def init_menus():
                 "sort": 3,
                 "menu_type": "menu",
                 "parent_id": None,
-                "roles": "SUPER"
+                "roles": "SUPER",
             },
             {
                 "name": "CustomerList",
@@ -135,8 +136,8 @@ def init_menus():
                 "sort": 1,
                 "menu_type": "menu",
                 "parent_id": 9,  # Customer的子菜单
-                "roles": "SUPER"
-            }
+                "roles": "SUPER",
+            },
         ]
 
         # 插入菜单数据
@@ -147,7 +148,7 @@ def init_menus():
         # 提交事务
         db.commit()
 
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise
     finally:
