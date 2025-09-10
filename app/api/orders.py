@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.core.deps import get_current_active_user
+from app.models.user import User
 from app.schemas.order import (
     InternalOrderCreate, 
     InternalOrderResponse, 
@@ -25,7 +27,9 @@ def get_internal_orders(
     repairShop: str = None,
     reporterName: str = None,
     dateRange: list = None,
-    db: Session = Depends(get_db)
+    createdBy: int = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
     """获取保内工单列表"""
     try:
@@ -33,6 +37,10 @@ def get_internal_orders(
         
         # 构建基础查询
         query = db.query(internal_order_crud.model)
+        
+        # 根据createdBy参数过滤
+        if createdBy is not None:
+            query = query.filter(internal_order_crud.model.created_by == createdBy)
         
         # 添加筛选条件
         if orderNo:
@@ -79,10 +87,15 @@ def get_internal_orders(
 
 
 @router.post("/internal/", response_model=ApiResponse)
-def create_internal_order(order: InternalOrderCreate, db: Session = Depends(get_db)):
+def create_internal_order(
+    order: InternalOrderCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """创建保内工单"""
     try:
         order_data = order.model_dump()
+        order_data["created_by"] = current_user.id
         
         # 分离主工单数据和详情数据
         detail_fields = [
@@ -170,7 +183,9 @@ def get_external_orders(
     repairShop: str = None,
     reporterName: str = None,
     dateRange: list = None,
-    db: Session = Depends(get_db)
+    createdBy: int = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
     """获取保外工单列表"""
     try:
@@ -178,6 +193,10 @@ def get_external_orders(
         
         # 构建基础查询
         query = db.query(external_order_crud.model)
+        
+        # 根据createdBy参数过滤
+        if createdBy is not None:
+            query = query.filter(external_order_crud.model.created_by == createdBy)
         
         # 添加筛选条件
         if orderNo:
@@ -224,10 +243,15 @@ def get_external_orders(
 
 
 @router.post("/external/", response_model=ApiResponse)
-def create_external_order(order: ExternalOrderCreate, db: Session = Depends(get_db)):
+def create_external_order(
+    order: ExternalOrderCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """创建保外工单"""
     try:
         order_data = order.model_dump()
+        order_data["created_by"] = current_user.id
         
         # 分离主工单数据和详情数据
         detail_fields = [

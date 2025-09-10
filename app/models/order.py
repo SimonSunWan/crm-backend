@@ -28,6 +28,7 @@ class InternalOrder(Base, TimestampMixin):
     pack_date = Column(Date)
     under_warranty = Column(Boolean, default=True)
     fault_description = Column(Text)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # 关联详情记录
     details = relationship("InternalOrderDetail", back_populates="order", cascade="all, delete-orphan")
@@ -84,6 +85,7 @@ class ExternalOrder(Base, TimestampMixin):
     pack_date = Column(Date)
     under_warranty = Column(Boolean, default=False)
     fault_description = Column(Text)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     # 关联详情记录
     details = relationship("ExternalOrderDetail", back_populates="order", cascade="all, delete-orphan")

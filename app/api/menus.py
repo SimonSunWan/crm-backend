@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.deps import get_current_superuser
+from app.core.deps import get_current_superuser, get_current_active_user
 from app.core.exceptions import CRMException
 from app.schemas.menu import MenuCreate, MenuResponse, MenuUpdate
 from app.schemas.base import ApiResponse
@@ -134,7 +134,7 @@ def get_menu_tree(db: Session = Depends(get_db)):
 
 @router.get("/navigation", response_model=ApiResponse)
 def get_navigation_menus(
-    current_user: User = Depends(get_current_superuser),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """获取导航菜单（用于左侧菜单和动态路由）"""
