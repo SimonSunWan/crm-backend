@@ -1,39 +1,78 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 from datetime import datetime
+import time
+import random
 from app.core.crud import CRUDBase
 from app.models.order import InternalOrder, ExternalOrder, InternalOrderDetail, ExternalOrderDetail
+from app.core.exceptions import CRMException
+from app.core.id_generator import order_id_generator
 
 
 class InternalOrderCRUD(CRUDBase[InternalOrder]):
     """保内工单CRUD操作"""
     
-    def generate_order_id(self, db: Session) -> str:
-        """生成保内工单ID：BN + 年月日 + 4位自增"""
+    def generate_order_id_safe(self, db: Session, max_retries: int = 5) -> str:
+        """并发安全的保内工单ID生成：BN + 年月日 + 4位自增"""
         today = datetime.now().strftime("%Y%m%d")
         prefix = f"BN{today}"
         
-        latest_order = (
-            db.query(self.model)
-            .filter(self.model.id.like(f"{prefix}%"))
-            .order_by(desc(self.model.id))
-            .first()
-        )
+        for attempt in range(max_retries):
+            try:
+                # 使用数据库锁确保并发安全
+                with db.begin_nested():  # 使用嵌套事务
+                    # 查询并锁定相关记录
+                    latest_order = (
+                        db.query(self.model)
+                        .filter(self.model.id.like(f"{prefix}%"))
+                        .with_for_update()  # 添加行级锁
+                        .order_by(desc(self.model.id))
+                        .first()
+                    )
+                    
+                    if latest_order:
+                        latest_num = int(latest_order.id[-4:])
+                        new_num = latest_num + 1
+                    else:
+                        new_num = 1
+                        
+                    order_id = f"{prefix}{new_num:04d}"
+                    
+                    # 验证ID唯一性（双重检查）
+                    existing_order = db.query(self.model).filter(self.model.id == order_id).first()
+                    if not existing_order:
+                        return order_id
+                    else:
+                        # ID已存在，等待一小段时间后重试
+                        time.sleep(random.uniform(0.01, 0.05))
+                        continue
+                        
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise CRMException(status_code=500, detail=f"生成工单ID失败: {str(e)}")
+                # 等待后重试
+                time.sleep(random.uniform(0.01, 0.1))
+                continue
         
-        if latest_order:
-            latest_num = int(latest_order.id[-4:])
-            new_num = latest_num + 1
-        else:
-            new_num = 1
-            
-        return f"{prefix}{new_num:04d}"
+        # 如果所有重试都失败，抛出异常
+        raise CRMException(status_code=500, detail="生成工单ID失败，请稍后重试")
     
     def create(self, db: Session, obj_in: dict) -> InternalOrder:
-        """创建保内工单"""
-        order_id = self.generate_order_id(db)
-        obj_in['id'] = order_id
-        return super().create(db, obj_in)
+        """创建保内工单（使用并发安全的ID生成）"""
+        try:
+            order_id = order_id_generator.generate_internal_order_id(db)
+            obj_in['id'] = order_id
+            return super().create(db, obj_in)
+        except Exception as e:
+            db.rollback()
+            if "unique constraint" in str(e).lower() or "duplicate key" in str(e).lower():
+                # ID冲突，使用备用策略重试
+                order_id = order_id_generator.generate_with_timestamp("BN")
+                obj_in['id'] = order_id
+                return super().create(db, obj_in)
+            else:
+                raise CRMException(status_code=500, detail=f"创建保内工单失败: {str(e)}")
     
     def get_by_id(self, db: Session, order_id: str) -> Optional[InternalOrder]:
         """根据工单ID获取保内工单"""
@@ -92,31 +131,66 @@ class InternalOrderCRUD(CRUDBase[InternalOrder]):
 class ExternalOrderCRUD(CRUDBase[ExternalOrder]):
     """保外工单CRUD操作"""
     
-    def generate_order_id(self, db: Session) -> str:
-        """生成保外工单ID：BW + 年月日 + 4位自增"""
+    def generate_order_id_safe(self, db: Session, max_retries: int = 5) -> str:
+        """并发安全的保外工单ID生成：BW + 年月日 + 4位自增"""
         today = datetime.now().strftime("%Y%m%d")
         prefix = f"BW{today}"
         
-        latest_order = (
-            db.query(self.model)
-            .filter(self.model.id.like(f"{prefix}%"))
-            .order_by(desc(self.model.id))
-            .first()
-        )
+        for attempt in range(max_retries):
+            try:
+                # 使用数据库锁确保并发安全
+                with db.begin_nested():  # 使用嵌套事务
+                    # 查询并锁定相关记录
+                    latest_order = (
+                        db.query(self.model)
+                        .filter(self.model.id.like(f"{prefix}%"))
+                        .with_for_update()  # 添加行级锁
+                        .order_by(desc(self.model.id))
+                        .first()
+                    )
+                    
+                    if latest_order:
+                        latest_num = int(latest_order.id[-4:])
+                        new_num = latest_num + 1
+                    else:
+                        new_num = 1
+                        
+                    order_id = f"{prefix}{new_num:04d}"
+                    
+                    # 验证ID唯一性（双重检查）
+                    existing_order = db.query(self.model).filter(self.model.id == order_id).first()
+                    if not existing_order:
+                        return order_id
+                    else:
+                        # ID已存在，等待一小段时间后重试
+                        time.sleep(random.uniform(0.01, 0.05))
+                        continue
+                        
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise CRMException(status_code=500, detail=f"生成工单ID失败: {str(e)}")
+                # 等待后重试
+                time.sleep(random.uniform(0.01, 0.1))
+                continue
         
-        if latest_order:
-            latest_num = int(latest_order.id[-4:])
-            new_num = latest_num + 1
-        else:
-            new_num = 1
-            
-        return f"{prefix}{new_num:04d}"
+        # 如果所有重试都失败，抛出异常
+        raise CRMException(status_code=500, detail="生成工单ID失败，请稍后重试")
     
     def create(self, db: Session, obj_in: dict) -> ExternalOrder:
-        """创建保外工单"""
-        order_id = self.generate_order_id(db)
-        obj_in['id'] = order_id
-        return super().create(db, obj_in)
+        """创建保外工单（使用并发安全的ID生成）"""
+        try:
+            order_id = order_id_generator.generate_external_order_id(db)
+            obj_in['id'] = order_id
+            return super().create(db, obj_in)
+        except Exception as e:
+            db.rollback()
+            if "unique constraint" in str(e).lower() or "duplicate key" in str(e).lower():
+                # ID冲突，使用备用策略重试
+                order_id = order_id_generator.generate_with_timestamp("BW")
+                obj_in['id'] = order_id
+                return super().create(db, obj_in)
+            else:
+                raise CRMException(status_code=500, detail=f"创建保外工单失败: {str(e)}")
     
     def get_by_id(self, db: Session, order_id: str) -> Optional[ExternalOrder]:
         """根据工单ID获取保外工单"""

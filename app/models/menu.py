@@ -21,14 +21,9 @@ class Menu(Base, TimestampMixin):
     is_enable = Column(Boolean, default=True, comment="是否启用")
     menu_type = Column(String(20), default="menu", comment="菜单类型：menu-菜单，button-权限")
     parent_id = Column(Integer, ForeignKey("menus.id"), nullable=True, comment="父菜单ID")
-    roles = Column(Text, nullable=True, comment="角色权限，JSON字符串")
     
     # 权限相关字段
     auth_mark = Column(String(100), nullable=True, comment="权限标识")
-    
-    # 创建者和更新者
-    create_by = Column(String(255), nullable=True, comment="创建者")
-    update_by = Column(String(255), nullable=True, comment="更新者")
     
     # 关系
     children = relationship("Menu", backref="parent", remote_side=[id])

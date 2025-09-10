@@ -91,7 +91,7 @@ def create_role(
         
         # 创建角色数据
         role_data = role.model_dump()
-        role_data["create_by"] = current_user.user_name
+        role_data["created_by"] = current_user.user_name
         
         created_role = role_crud.create(db, role_data)
         return ApiResponse(message="角色创建成功", data=RoleResponse.model_validate(created_role))
@@ -138,7 +138,7 @@ def update_role(
         
         # 更新角色数据
         update_data = role_update.model_dump(exclude_unset=True)
-        update_data["update_by"] = current_user.user_name
+        update_data["updated_by"] = current_user.user_name
         
         updated_role = role_crud.update(db, role, update_data)
         return ApiResponse(message="角色更新成功", data=RoleResponse.model_validate(updated_role))

@@ -28,14 +28,5 @@ class RoleUpdate(CamelCaseModel):
 class RoleResponse(RoleBase):
     """角色响应模型"""
     id: int
-    create_by: Optional[str] = None
-    create_time: Optional[datetime] = None
-    update_by: Optional[str] = None
-    update_time: Optional[datetime] = None
-
-    @field_serializer('create_time', 'update_time')
-    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
-        """序列化datetime为yyyy-MM-dd HH:mm:ss格式"""
-        if value is None:
-            return None
-        return value.strftime('%Y-%m-%d %H:%M:%S')
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None

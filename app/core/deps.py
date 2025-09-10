@@ -21,7 +21,7 @@ def get_current_user_dependency(
     if not user:
         raise InvalidTokenError("无效的token或用户不存在")
     
-    if user.status != '1':
+    if not user.status:
         raise UserDisabledError("用户未启用")
     
     return user

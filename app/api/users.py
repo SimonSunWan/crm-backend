@@ -59,9 +59,8 @@ def update_current_user_info(
         if existing_username and existing_username.id != current_user.id:
             raise UserAlreadyExistsError("用户名已存在")
     
-    # 处理status字段：将布尔值转换为字符串
-    if 'status' in update_data:
-        update_data['status'] = '1' if update_data['status'] else '2'
+    # 处理status字段：保持布尔值
+    # status字段已经是布尔类型，不需要转换
     
     # 更新用户基本信息
     updated_user = user_crud.update(db, current_user, update_data)
@@ -132,9 +131,8 @@ def get_users(
             query = query.filter(User.roles.any(Role.id == role.id))
     
     if status is not None:
-        # 将布尔值转换为字符串进行筛选
-        status_str = '1' if status else '2'
-        query = query.filter(User.status == status_str)
+        # 直接使用布尔值进行筛选
+        query = query.filter(User.status == status)
     
     # 预加载角色信息
     query = query.options(joinedload(User.roles))
@@ -204,9 +202,11 @@ def create_user(
     if 'SUPER' in role_codes:
         raise SuperAdminOperationError("不允许创建超级管理员用户")
     
-    # 处理status字段：将布尔值转换为字符串
-    if 'status' in user_data:
-        user_data['status'] = '1' if user_data['status'] else '2'
+    # 处理status字段：保持布尔值
+    # status字段已经是布尔类型，不需要转换
+    
+    # 设置创建者
+    user_data["created_by"] = current_user.user_name
     
     # 创建用户
     created_user = user_crud.create(db, user_data)
@@ -270,9 +270,11 @@ def update_user(
         if existing_username and existing_username.id != user_id:
             raise UserAlreadyExistsError("用户名已存在")
     
-    # 处理status字段：将布尔值转换为字符串
-    if 'status' in update_data:
-        update_data['status'] = '1' if update_data['status'] else '2'
+    # 处理status字段：保持布尔值
+    # status字段已经是布尔类型，不需要转换
+    
+    # 设置更新者
+    update_data["updated_by"] = current_user.user_name
     
     # 更新用户基本信息
     updated_user = user_crud.update(db, user, update_data)

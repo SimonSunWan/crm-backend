@@ -10,11 +10,7 @@ class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    create_by = Column(String, nullable=True)
-    create_time = Column(DateTime, nullable=True)
-    update_by = Column(String, nullable=True)
-    update_time = Column(DateTime, nullable=True)
-    status = Column(String, nullable=True)
+    status = Column(Boolean, default=True, nullable=True)  # 统一为Boolean类型
     user_name = Column(String, unique=True, index=True, nullable=False)
     nick_name = Column(String, nullable=True)
     phone = Column(String, nullable=True)

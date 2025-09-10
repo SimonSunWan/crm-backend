@@ -16,8 +16,6 @@ class Role(Base, TimestampMixin):
     role_code = Column(String(50), unique=True, index=True, nullable=False, comment="角色编码")
     description = Column(Text, nullable=True, comment="角色描述")
     status = Column(Boolean, default=True, comment="启用状态")
-    create_by = Column(String(50), nullable=True, comment="创建人")
-    update_by = Column(String(50), nullable=True, comment="更新人")
     
     # 与用户的多对多关系
     users = relationship("User", secondary=user_role, back_populates="roles")

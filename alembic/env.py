@@ -12,7 +12,7 @@ os.environ['PYTHONUTF8'] = '1'
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import Base
-from app.models import user, customer, dictionary
+from app.models import user, dictionary
 from app.core.config import settings
 
 config = context.config

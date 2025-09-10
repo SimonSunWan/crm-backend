@@ -12,9 +12,9 @@ from typing import Optional
 router = APIRouter()
 
 
-def menu_to_response(menu) -> dict:
-    """将Menu对象转换为MenuResponse字典，避免children字段验证问题"""
-    # 处理角色关系
+def menu_to_response(menu) -> MenuResponse:
+    """将Menu对象转换为MenuResponse对象"""
+    # 处理角色关系转换
     roles_data = None
     if menu.roles:
         from app.schemas.menu import RoleResponseForMenu
@@ -29,7 +29,8 @@ def menu_to_response(menu) -> dict:
             }
             roles_data.append(RoleResponseForMenu.model_validate(role_dict))
     
-    return {
+    # 构建菜单字典
+    menu_dict = {
         "id": menu.id,
         "name": menu.name,
         "path": menu.path,
@@ -44,12 +45,12 @@ def menu_to_response(menu) -> dict:
         "parent_id": menu.parent_id,
         "roles": roles_data,
         "auth_mark": menu.auth_mark,
-        "create_by": menu.create_by,
-        "create_time": menu.create_time,
-        "update_by": menu.update_by,
-        "update_time": menu.update_time,
+        "created_by": menu.created_by,
+        "updated_by": menu.updated_by,
         "children": []
     }
+    
+    return MenuResponse.model_validate(menu_dict)
 
 
 # 菜单相关接口
@@ -74,11 +75,12 @@ def get_menus(
                 if menu.parent_id == parent_id:
                     # 递归构建子菜单
                     children = build_tree(menus, menu.id)
-                    # 使用辅助函数转换为字典，然后设置children
-                    menu_dict = menu_to_response(menu)
+                    # 使用辅助函数转换为MenuResponse对象，然后设置children
+                    menu_response = menu_to_response(menu)
+                    # 创建新的字典并更新children
+                    menu_dict = menu_response.model_dump()
                     menu_dict["children"] = children
-                    menu_response = MenuResponse.model_validate(menu_dict)
-                    tree.append(menu_response)
+                    tree.append(MenuResponse.model_validate(menu_dict))
             # 按sort字段从小到大排序
             tree.sort(key=lambda x: x.sort)
             return tree
@@ -124,8 +126,7 @@ def get_menu_tree(db: Session = Depends(get_db)):
         # 转换为响应模型，处理children字段
         menu_responses = []
         for menu in menus:
-            menu_dict = menu_to_response(menu)
-            menu_response = MenuResponse.model_validate(menu_dict)
+            menu_response = menu_to_response(menu)
             menu_responses.append(menu_response)
         return ApiResponse(code=200, message="操作成功", data=menu_responses)
     except Exception as e:
@@ -257,8 +258,6 @@ def create_menu(
 ):
     """创建菜单"""
     try:
-        print(f"创建菜单 - 接收到的数据: {menu}")
-        
         # 检查菜单名称是否已存在（同层级查重）
         if menu_crud.get_by_name_and_parent(db, menu.name, menu.parent_id):
             raise HTTPException(status_code=400, detail="菜单名称已存在")
@@ -273,9 +272,7 @@ def create_menu(
         
         # 创建菜单数据
         menu_data = menu.model_dump()
-        menu_data["create_by"] = current_user.user_name
-        
-        print(f"创建菜单 - 处理后的数据: {menu_data}")
+        menu_data["created_by"] = current_user.user_name
         
         # 如果有parent_id，验证父菜单是否存在
         if menu.parent_id:
@@ -287,16 +284,12 @@ def create_menu(
         menu_crud.update_parent_enable_status(db, created_menu.id)
         
         # 转换为响应模型，处理children字段
-        menu_dict = menu_to_response(created_menu)
-        menu_response = MenuResponse.model_validate(menu_dict)
+        menu_response = menu_to_response(created_menu)
         
         return ApiResponse(code=200, message="菜单创建成功", data=menu_response)
     except HTTPException:
         raise
     except Exception as e:
-        print(f"创建菜单 - 错误详情: {str(e)}")
-        import traceback
-        print(f"创建菜单 - 错误堆栈: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"创建菜单失败: {str(e)}")
 
 
@@ -306,8 +299,7 @@ def get_menu(menu_id: int, db: Session = Depends(get_db)):
     try:
         menu = menu_crud.get_or_404(db, menu_id, "菜单未找到")
         # 转换为响应模型，处理children字段
-        menu_dict = menu_to_response(menu)
-        menu_response = MenuResponse.model_validate(menu_dict)
+        menu_response = menu_to_response(menu)
         return ApiResponse(code=200, message="操作成功", data=menu_response)
     except HTTPException:
         raise
@@ -344,7 +336,7 @@ def update_menu(
         
         # 更新菜单数据
         update_data = menu.model_dump(exclude_unset=True)
-        update_data["update_by"] = current_user.user_name
+        update_data["updated_by"] = current_user.user_name
         
         updated_menu = menu_crud.update(db, existing_menu, update_data)
         
@@ -352,8 +344,7 @@ def update_menu(
         menu_crud.update_parent_enable_status(db, menu_id)
         
         # 转换为响应模型，处理children字段
-        menu_dict = menu_to_response(updated_menu)
-        menu_response = MenuResponse.model_validate(menu_dict)
+        menu_response = menu_to_response(updated_menu)
         return ApiResponse(code=200, message="菜单更新成功", data=menu_response)
     except HTTPException:
         raise
@@ -405,5 +396,4 @@ def delete_menu(
         raise
     except Exception as e:
         db.rollback()
-        print(f"删除菜单错误详情: {str(e)}")
         raise HTTPException(status_code=500, detail=f"删除菜单失败: {str(e)}")

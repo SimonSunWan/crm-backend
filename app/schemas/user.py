@@ -35,18 +35,9 @@ class UserUpdate(CamelCaseModel):
 class UserResponse(UserBase):
 
     id: int
-    create_by: Optional[str] = None
-    create_time: Optional[datetime] = None
-    update_by: Optional[str] = None
-    update_time: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
     role_names: Optional[List[str]] = None  # 角色名称数组
-
-    @field_serializer('create_time', 'update_time')
-    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
-        """序列化datetime为yyyy-MM-dd HH:mm:ss格式"""
-        if value is None:
-            return None
-        return value.strftime('%Y-%m-%d %H:%M:%S')
 
     model_config = {"exclude": {"hashed_password"}}
 
@@ -57,7 +48,7 @@ class UserResponse(UserBase):
         data = {}
         
         # 复制基本字段
-        for field in ['id', 'email', 'phone', 'user_name', 'nick_name', 'avatar', 'create_by', 'create_time', 'update_by', 'update_time']:
+        for field in ['id', 'email', 'phone', 'user_name', 'nick_name', 'avatar', 'created_by', 'updated_by']:
             if hasattr(obj, field):
                 data[field] = getattr(obj, field)
         
@@ -71,9 +62,9 @@ class UserResponse(UserBase):
             data['roles'] = []
             data['role_names'] = []
         
-        # 处理status字段：将字符串转换为布尔值
-        if hasattr(obj, 'status') and obj.status is not None:
-            data['status'] = obj.status == '1'
+        # 处理status字段：已经是Boolean类型
+        if hasattr(obj, 'status'):
+            data['status'] = obj.status
         else:
             data['status'] = True  # 默认值
         

@@ -16,7 +16,7 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
     if not user:
         raise InvalidCredentialsError("用户名或密码错误")
     
-    if user.status != '1':
+    if not user.status:
         raise UserDisabledError("用户未启用")
     
     access_token = create_access_token(data={"sub": str(user.id)})

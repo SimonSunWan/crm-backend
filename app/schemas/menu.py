@@ -44,7 +44,6 @@ class MenuCreate(CamelCaseModel):
     menu_type: str = "menu"
     parent_id: Optional[int] = None
     auth_mark: Optional[str] = None
-    create_by: Optional[str] = None
 
 
 class MenuUpdate(CamelCaseModel):
@@ -61,16 +60,13 @@ class MenuUpdate(CamelCaseModel):
     menu_type: Optional[str] = None
     parent_id: Optional[int] = None
     auth_mark: Optional[str] = None
-    update_by: Optional[str] = None
 
 
 class MenuResponse(MenuBase):
     """菜单响应模型"""
     id: int
-    create_by: Optional[str] = None
-    create_time: Optional[datetime] = None
-    update_by: Optional[str] = None
-    update_time: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
     children: Optional[List['MenuResponse']] = None
 
 
