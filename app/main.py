@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.api.api import api_router
 from app.core.database import SessionLocal
@@ -12,7 +11,6 @@ from app.core.exceptions import CRMException
 from app.core.middleware import LoggingMiddleware, SecurityHeadersMiddleware
 import traceback
 import logging
-import os
 
 # 配置日志
 logging.basicConfig(level=logging.DEBUG)
@@ -81,10 +79,6 @@ app.add_middleware(
 # 添加自定义中间件
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
-
-# 挂载静态文件服务（在路由注册之前）
-if os.path.exists("uploads"):
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # 然后注册异常处理器
 @app.exception_handler(CRMException)
