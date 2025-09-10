@@ -1,10 +1,4 @@
-"""Production initial migration
-
-Revision ID: 001_production_initial
-Revises: 
-Create Date: 2025-01-27 18:00:00.000000
-
-"""
+"""Production initial migration - Revision ID: 001_production_initial"""
 from alembic import op
 import sqlalchemy as sa
 

@@ -1,10 +1,4 @@
-"""rename_dictionary_tables_to_singular
-
-Revision ID: 29d593506090
-Revises: 93c0df211b63
-Create Date: 2025-09-10 17:08:01.082899
-
-"""
+"""rename_dictionary_tables_to_singular - Revision ID: 29d593506090"""
 from alembic import op
 import sqlalchemy as sa
 

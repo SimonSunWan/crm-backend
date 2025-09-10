@@ -1,10 +1,4 @@
-"""rename_tables_to_singular
-
-Revision ID: 93c0df211b63
-Revises: 001_production_initial
-Create Date: 2025-09-10 17:02:02.541663
-
-"""
+"""rename_tables_to_singular - Revision ID: 93c0df211b63"""
 from alembic import op
 import sqlalchemy as sa
 

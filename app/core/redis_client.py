@@ -1,14 +1,10 @@
-"""
-Redis客户端和缓存工具
-提供统一的Redis连接和缓存操作接口
-"""
+"""Redis客户端和缓存工具"""
 
 import json
 import logging
 from typing import Any, Optional
 
 import redis
-from redis.connection import ConnectionPool
 
 from app.core.config import settings
 

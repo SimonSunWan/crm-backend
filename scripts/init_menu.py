@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-菜单数据初始化脚本
-用于在数据库创建后插入基础的菜单数据
-"""
+"""菜单数据初始化脚本"""
 
 import os
 import sys

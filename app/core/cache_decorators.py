@@ -1,7 +1,4 @@
-"""
-缓存装饰器
-提供便捷的缓存装饰器，简化缓存操作
-"""
+"""缓存装饰器"""
 
 import functools
 import logging
@@ -17,19 +14,7 @@ def cached(
     ttl: Optional[int] = None,
     prefix: str = "cache",
 ):
-    """
-    缓存装饰器
-
-    Args:
-        key_func: 生成缓存键的函数，接收函数参数
-        ttl: 缓存过期时间（秒）
-        prefix: 缓存键前缀
-
-    Usage:
-        @cached(lambda user_id: f"user:{user_id}", ttl=1800)
-        def get_user(user_id: int):
-            return db.query(User).filter(User.id == user_id).first()
-    """
+    """缓存装饰器，支持自定义键生成和TTL"""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -66,18 +51,7 @@ def cached(
 
 
 def cache_invalidate(key_pattern: str):
-    """
-    缓存失效装饰器
-
-    Args:
-        key_pattern: 要失效的缓存键模式
-
-    Usage:
-        @cache_invalidate("user:*")
-        def update_user(user_id: int, data: dict):
-            # 更新用户后，清除相关缓存
-            pass
-    """
+    """缓存失效装饰器，按模式清除缓存"""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
@@ -97,14 +71,7 @@ def cache_invalidate(key_pattern: str):
 
 
 def cache_refresh(key_func: Callable, ttl: Optional[int] = None):
-    """
-    缓存刷新装饰器
-    先清除缓存，再执行函数并重新缓存
-
-    Args:
-        key_func: 生成缓存键的函数
-        ttl: 缓存过期时间
-    """
+    """缓存刷新装饰器，先清除再重新缓存"""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)

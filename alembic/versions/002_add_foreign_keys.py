@@ -1,10 +1,4 @@
-"""Add foreign key constraints
-
-Revision ID: 002_add_foreign_keys
-Revises: 93c0df211b63
-Create Date: 2025-01-27 20:00:00.000000
-
-"""
+"""Add foreign key constraints - Revision ID: 002_add_foreign_keys"""
 from alembic import op
 import sqlalchemy as sa
 

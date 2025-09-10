@@ -1,7 +1,4 @@
-"""
-公共响应处理函数
-提供统一的API响应处理
-"""
+"""公共响应处理函数"""
 
 from typing import Any, Dict, List
 
@@ -26,15 +23,7 @@ def error_response(
 
 
 def handle_api_exception(func):
-    """
-    API异常处理装饰器
-
-    Args:
-        func: 被装饰的函数
-
-    Returns:
-        装饰后的函数
-    """
+    """API异常处理装饰器"""
 
     def wrapper(*args, **kwargs):
         try:
