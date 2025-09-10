@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic, List, Optional, Union
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.core.crud import CRUDBase
 from app.models.system_settings import SystemSetting

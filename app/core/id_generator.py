@@ -2,9 +2,9 @@
 并发安全的ID生成服务
 提供多种ID生成策略，确保在高并发环境下的安全性
 """
-from typing import Optional, Union
+from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import text, func
+from sqlalchemy import text
 from datetime import datetime
 import time
 import random

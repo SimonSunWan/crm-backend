@@ -1,6 +1,5 @@
 from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-from typing import Optional
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.core.exceptions import InvalidTokenError, UserDisabledError

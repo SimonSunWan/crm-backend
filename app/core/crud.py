@@ -1,6 +1,5 @@
 from typing import Generic, TypeVar, Type, Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
 from app.core.database import Base
 from app.core.exceptions import CRMException
 

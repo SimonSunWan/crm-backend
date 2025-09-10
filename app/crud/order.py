@@ -1,6 +1,6 @@
-from typing import Optional, List
+from typing import Optional
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc, text
+from sqlalchemy import desc
 from datetime import datetime
 import time
 import random

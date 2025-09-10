@@ -1,6 +1,5 @@
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
 
 
 class DictionaryTypeBase(BaseModel):

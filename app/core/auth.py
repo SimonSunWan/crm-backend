@@ -2,12 +2,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.core.exceptions import InvalidCredentialsError, UserDisabledError
+from app.core.exceptions import UserDisabledError
 from app.models.user import User
-from app.models.role import Role
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

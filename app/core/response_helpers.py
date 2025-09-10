@@ -2,8 +2,7 @@
 公共响应处理函数
 提供统一的API响应处理
 """
-from typing import Any, Optional, List, Dict
-from sqlalchemy.orm import Session
+from typing import Any, List, Dict
 from fastapi import HTTPException
 from app.schemas.base import ApiResponse
 from app.models.user import User

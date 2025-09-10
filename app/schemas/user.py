@@ -1,8 +1,5 @@
-from pydantic import BaseModel, field_serializer
-from typing import Optional, Any, List
-from datetime import datetime
+from typing import Optional, List
 from app.schemas.base import ApiResponse, Token, CamelCaseModel
-from app.schemas.role import RoleResponse
 
 
 class UserBase(CamelCaseModel):

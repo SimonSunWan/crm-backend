@@ -1,4 +1,4 @@
-from typing import Optional, Any, Generic, TypeVar
+from typing import Optional, Generic, TypeVar
 from pydantic import BaseModel, ConfigDict, field_serializer
 from datetime import datetime, date
 

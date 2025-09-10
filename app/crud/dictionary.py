@@ -1,7 +1,6 @@
 from app.core.crud import CRUDBase
 from app.models.dictionary import DictionaryType, DictionaryEnum
 from sqlalchemy.orm import Session
-from typing import List
 
 
 class CRUDDictionaryType(CRUDBase[DictionaryType]):

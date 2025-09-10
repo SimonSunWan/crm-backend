@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime
-from app.schemas.base import ApiResponse, CamelCaseModel
+from app.schemas.base import CamelCaseModel
 
 
 # 前向引用声明

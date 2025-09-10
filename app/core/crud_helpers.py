@@ -2,9 +2,8 @@
 公共CRUD操作函数
 提供通用的CRUD操作辅助函数
 """
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from app.models.user import User
 from app.models.role import Role
 
