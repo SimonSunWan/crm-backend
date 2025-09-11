@@ -340,6 +340,10 @@ uvicorn app.main:app --reload
 
 ### 第七步：启动服务
 
+   - 安全 -> 系统防火墙 -> 添加端口规则
+   - 软件商店 -> PostgreSQL管理器 -> 数据库列表 -> 修改Postgres密码
+   - 软件商店 -> PostgreSQL管理器 -> 配置修改 -> listen_addresses = '*'
+
 
 ## 常用指令
 pip index versions redis # 检查最新版本
