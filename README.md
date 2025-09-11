@@ -216,6 +216,131 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+## 宝塔面板部署（生产环境）
+
+### 前置准备
+
+1. **服务器要求**：
+   - 操作系统：Alibaba Cloud Linux
+   - 内存：至少 2GB RAM
+   - 硬盘：至少 20GB 可用空间
+   - Python 3.8+ 环境
+
+2. 阿里云服务器 -> 应用概详情 -> 端口放通
+
+### 第一步：安装必要软件
+
+1. **登录宝塔面板**：
+   - 访问：`http://你的服务器IP:8888`
+   - 使用安装时显示的账号密码登录
+
+2. **安装软件环境**：
+   - 进入 **软件商店**
+   - 安装以下软件：
+     - **Nginx** (1.20+)
+     - **PostgreSQL** (12+)
+     - **Redis** (6.0+)
+     - **python环境管理器** (用于管理Python环境)
+
+### 第二步：创建数据库
+
+1. **进入数据库管理**：
+   - 点击 **数据库** → **添加数据库**
+   ```
+   数据库名：crm_backend
+   用户名：crm_user
+   密码：crm123456
+   主机：localhost
+   端口：5432
+   ```
+
+### 第三步：上传项目代码
+
+1. **上传代码**：
+   - **方式一**：压缩上传（推荐）
+     - 压缩项目文件（**不要包含venv目录**）
+     - 上传到 `/www/wwwroot/` 并解压
+   - **方式二**：Git克隆
+     - 进入 **文件** `/www/wwwroot/` **终端**
+     ```bash
+     git clone https://github.com/SimonSunWan/crm-backend.git
+     cd crm-backend
+     ```
+
+### 第四步：配置Python环境
+
+1. **创建Python项目**：
+   - 进入 **网站** → **Python项目**
+   - 点击 **添加项目**
+   - 项目名称：`crm-backend`
+   - 项目端口：`8000`
+   - Python版本：`3.8+`（推荐3.13.7）
+   - 启动方式：`命令行启动`
+   - 项目路径：`/www/wwwroot/crm-backend`
+   - 启动命令：`uvicorn app.main:app --reload`
+   - 环境变量：选择 `从文件加载`，文件路径：`/www/wwwroot/crm-backend/.env`
+   - 启动用户：`www`
+
+2. **安装依赖**：
+   - 在Python项目管理页面点击 **终端**
+   - 执行以下命令：
+     ```bash
+     # 删除旧的venv目录（如果存在）
+     rm -rf venv
+     
+     # 创建新的虚拟环境
+     python3 -m venv venv
+     
+     # 激活虚拟环境
+     source venv/bin/activate
+     
+     # 升级pip
+     pip install --upgrade pip
+     
+     # 安装依赖
+     pip install -r requirements.txt
+     
+     # 如果pip速度慢，使用国内源
+     pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/
+     ```
+
+### 第五步：配置环境变量
+
+1. **创建环境配置文件**：
+   - 在项目根目录修改 `.env` 文件：
+     ```bash
+     cd /www/wwwroot/crm-backend
+     touch .env
+     ```
+
+2. **编辑环境配置**：
+   ```bash
+   # 切换成管理员账号才能执行数据库迁移
+   DATABASE_URL=postgresql://postgres:7EJnG8iX8PzyGCph@localhost:5432/crm_backend
+   ```
+
+### 第六步：数据库迁移
+
+1. **执行数据库迁移**：
+   ```bash
+   # 在项目终端中执行
+   cd /www/wwwroot/crm-backend
+   source venv/bin/activate
+
+   # python环境变量
+   export PYTHONPATH=/www/wwwroot/crm-backend:$PYTHONPATH
+   
+   # 初始化数据库
+   alembic upgrade head
+   
+   # 初始化系统数据
+   python scripts/init_super.py
+   python scripts/init_menu.py
+   ```
+
+### 第七步：启动服务
+
+
 ## 常用指令
 pip index versions redis # 检查最新版本
 
