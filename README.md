@@ -136,6 +136,65 @@ class CamelCaseModel(BaseModel):
 
 ## 安装和运行
 
+### Docker 部署（推荐）
+
+1. 快速启动：
+```bash
+# 运行启动脚本
+./docker/docker-start.sh
+```
+
+或手动启动：
+```bash
+cd docker
+docker-compose up --build -d
+sleep 10
+docker-compose exec crm-backend alembic upgrade head
+```
+
+2. 服务架构：
+
+| 服务 | 端口 | 描述 |
+|------|------|------|
+| crm-backend | 8000 | FastAPI应用 |
+| postgres | 5432 | PostgreSQL数据库 |
+| redis | 6379 | Redis缓存 |
+
+3. 访问地址：
+- **API文档**: http://localhost:8000/docs
+- **ReDoc文档**: http://localhost:8000/redoc
+
+4. 常用命令：
+```bash
+# 进入docker目录
+cd docker
+
+# 启动服务
+docker-compose up -d
+
+# 查看状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+
+# 停止服务
+docker-compose down
+
+# 数据库迁移
+docker-compose exec crm-backend alembic upgrade head
+
+# 进入容器
+docker-compose exec crm-backend bash
+```
+
+5. 配置说明：
+- 默认配置文件：`docker/docker.env`
+- 生产环境：复制到`.env`并修改`SECRET_KEY`等配置
+- 数据库：postgres/123456@localhost:5432/postgres
+
+### 本地开发
+
 1. 安装依赖：
 ```bash
 pip install -r requirements.txt
