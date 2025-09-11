@@ -46,17 +46,17 @@ class CRUDUser(CRUDBase[User]):
 
         return user
 
-    @cached(lambda db, user_id: cache_key_user(user_id), ttl=1800)
+    @cached(lambda self, db, user_id: cache_key_user(user_id), ttl=1800)
     def get(self, db: Session, user_id: int) -> Optional[User]:
         """根据ID获取用户（带缓存）"""
         return super().get(db, user_id)
 
-    @cached(lambda db, username: cache_key_user_by_username(username), ttl=1800)
+    @cached(lambda self, db, username: cache_key_user_by_username(username), ttl=1800)
     def get_by_username(self, db: Session, username: str) -> Optional[User]:
         """根据用户名获取用户（带缓存）"""
         return db.query(User).filter(User.user_name == username).first()
 
-    @cached(lambda db, email: cache_key_user_by_email(email), ttl=1800)
+    @cached(lambda self, db, email: cache_key_user_by_email(email), ttl=1800)
     def get_by_email(self, db: Session, email: str) -> Optional[User]:
         """根据邮箱获取用户（带缓存）"""
         return db.query(User).filter(User.email == email).first()
