@@ -161,7 +161,7 @@ def init_menu():
         button_data = [
             # 保内工单 - 查看全部按钮
             {
-                "name": "查看全部",
+                "name": "保内查看全部",
                 "path": "",
                 "icon": "",
                 "sort": 2,
@@ -175,7 +175,7 @@ def init_menu():
             },
             # 保外工单 - 查看全部按钮
             {
-                "name": "查看全部",
+                "name": "保外查看全部",
                 "path": "",
                 "icon": "",
                 "sort": 2,

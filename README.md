@@ -213,7 +213,7 @@ alembic upgrade head
 
 4. 启动服务：
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## 宝塔面板部署（生产环境）
@@ -242,7 +242,7 @@ uvicorn app.main:app --reload
      - **Redis** (6.0+)
      - **python环境管理器** (用于管理Python环境)
 
-### 第二步：创建数据库
+### 第二步：创建数据库（也可以不创建，用默认的postgres数据库）
 
 1. **进入数据库管理**：
    - 点击 **数据库** → **添加数据库**
@@ -266,6 +266,7 @@ uvicorn app.main:app --reload
      git clone https://github.com/SimonSunWan/crm-backend.git
      cd crm-backend
      ```
+   - 改.env宝塔数据库配置打开
 
 ### 第四步：配置Python环境
 
@@ -277,7 +278,7 @@ uvicorn app.main:app --reload
    - Python版本：`3.8+`（推荐3.13.7）
    - 启动方式：`命令行启动`
    - 项目路径：`/www/wwwroot/crm-backend`
-   - 启动命令：`uvicorn app.main:app --reload`
+   - 启动命令：`uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
    - 环境变量：选择 `从文件加载`，文件路径：`/www/wwwroot/crm-backend/.env`
    - 启动用户：`www`
 
@@ -304,22 +305,7 @@ uvicorn app.main:app --reload
      pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple/
      ```
 
-### 第五步：配置环境变量
-
-1. **创建环境配置文件**：
-   - 在项目根目录修改 `.env` 文件：
-     ```bash
-     cd /www/wwwroot/crm-backend
-     touch .env
-     ```
-
-2. **编辑环境配置**：
-   ```bash
-   # 切换成管理员账号才能执行数据库迁移
-   DATABASE_URL=postgresql://postgres:7EJnG8iX8PzyGCph@localhost:5432/crm_backend
-   ```
-
-### 第六步：数据库迁移
+### 第五步：数据库迁移
 
 1. **执行数据库迁移**：
    ```bash
@@ -338,7 +324,7 @@ uvicorn app.main:app --reload
    python scripts/init_menu.py
    ```
 
-### 第七步：启动服务
+### 第六步：启动服务
 
    - 安全 -> 系统防火墙 -> 添加端口规则
    - 软件商店 -> PostgreSQL管理器 -> 数据库列表 -> 修改Postgres密码
