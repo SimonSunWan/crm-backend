@@ -160,7 +160,8 @@ def get_users(
 @router.post("/register", response_model=ApiResponse)
 def register_user(user: UserRegister, db: Session = Depends(get_db)):
     """用户注册"""
-    from app.core.response_helpers import normalize_empty_strings, success_response
+    from app.core.messages import success_response
+    from app.core.response_helpers import normalize_empty_strings
     from app.core.validators import validate_system_code
 
     # 校验系统码
@@ -196,7 +197,8 @@ def create_user(
 ):
     """创建用户（需要超级管理员权限）"""
     from app.core.crud_helpers import create_with_audit, handle_user_role_association
-    from app.core.response_helpers import normalize_empty_strings, success_response
+    from app.core.messages import success_response
+    from app.core.response_helpers import normalize_empty_strings
 
     # 处理角色数据
     user_data = user.model_dump()
@@ -310,7 +312,7 @@ def delete_user(
 @router.post("/forget-password", response_model=ApiResponse)
 def forget_password(data: UserForgetPassword, db: Session = Depends(get_db)):
     """忘记密码重置"""
-    from app.core.response_helpers import success_response
+    from app.core.messages import success_response
     from app.core.validators import validate_system_code
 
     # 校验系统码

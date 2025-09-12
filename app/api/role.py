@@ -69,7 +69,7 @@ def create_role(
 ):
     """创建角色"""
     from app.core.crud_helpers import create_with_audit
-    from app.core.response_helpers import success_response
+    from app.core.messages import success_response
     from app.core.validators import (
         validate_role_code_uniqueness,
         validate_role_name_uniqueness,
@@ -105,7 +105,7 @@ def update_role(
 ):
     """更新角色"""
     from app.core.crud_helpers import update_with_audit
-    from app.core.response_helpers import success_response
+    from app.core.messages import success_response
     from app.core.validators import (
         validate_role_code_uniqueness,
         validate_role_name_uniqueness,
