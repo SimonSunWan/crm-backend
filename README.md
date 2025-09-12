@@ -99,8 +99,8 @@ class User(Base):
     status = Column(Boolean)
     create_time = Column(DateTime)
     update_time = Column(DateTime)
-    create_by = Column(String)
-    update_by = Column(String)
+    created_by = Column(String)
+    updated_by = Column(String)
 ```
 
 ### API响应（驼峰）
@@ -322,6 +322,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    # 初始化系统数据
    python scripts/init_super.py
    python scripts/init_menu.py
+   python scripts/init_system.py
    ```
 
 ### 第六步：启动服务

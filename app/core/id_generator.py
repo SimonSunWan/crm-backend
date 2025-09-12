@@ -61,10 +61,11 @@ class OrderIDGenerator:
                 # 使用数据库锁确保并发安全
                 with db.begin_nested():
                     # 查询并锁定相关记录
+                    table_name = "internal_order" if prefix == "BN" else "external_order"
                     latest_order = db.execute(
                         text(
                             f"""
-                                SELECT id FROM {prefix.lower()}_orders
+                                SELECT id FROM {table_name}
                                 WHERE id LIKE :prefix
                                 ORDER BY id DESC
                                 LIMIT 1
@@ -85,7 +86,7 @@ class OrderIDGenerator:
                     # 验证ID唯一性
                     existing_order = db.execute(
                         text(
-                            f"SELECT id FROM {prefix.lower()}_orders "
+                            f"SELECT id FROM {table_name} "
                             f"WHERE id = :order_id"
                         ),
                         {"order_id": order_id},
@@ -114,7 +115,7 @@ class OrderIDGenerator:
         full_prefix = f"{prefix}{today}"
 
         # 创建序列（如果不存在）
-        sequence_name = f"{prefix.lower()}_order_seq_{today}"
+        sequence_name = f"internal_order_seq_{today}" if prefix == "BN" else f"external_order_seq_{today}"
 
         try:
             # 尝试创建序列

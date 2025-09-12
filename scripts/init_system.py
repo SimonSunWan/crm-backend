@@ -43,7 +43,7 @@ async def update_system_code():
                 "setting_name": "注册系统码",
                 "setting_desc": "用户注册和忘记密码时需要的系统验证码",
                 "status": True,
-                "create_by": "system",
+                "created_by": "system",
             }
             created_setting = system_setting_crud.create(db, system_code_data)
             if created_setting:

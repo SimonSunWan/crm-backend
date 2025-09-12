@@ -25,9 +25,9 @@ class SystemSettingUpdate(CamelCaseModel):
 
 class SystemSettingResponse(SystemSettingBase):
     id: int
-    create_by: Optional[str] = None
+    created_by: Optional[str] = None
     create_time: Optional[datetime] = None
-    update_by: Optional[str] = None
+    updated_by: Optional[str] = None
     update_time: Optional[datetime] = None
 
     class Config:
