@@ -331,9 +331,28 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    - 软件商店 -> PostgreSQL管理器 -> 数据库列表 -> 修改Postgres密码
    - 软件商店 -> PostgreSQL管理器 -> 配置修改 -> listen_addresses = '*'
 
+### 注意事项
+   
+   **如果不知道密码：单用户模式重置密码**：
+   # 切换到postgres用户
+   su - postgres
+   # 以postgres用户身份启动单用户模式
+   /www/server/pgsql/bin/postgres --single -D /www/server/pgsql/data postgres
+   ALTER USER postgres PASSWORD '123456';
+   \q
+
 
 ## 常用指令
 pip index versions redis # 检查最新版本
+
+psql
+\l
+\c postgres
+\dt
+\d 表名
+SELECT * FROM 表名;
+SELECT * FROM 表名 LIMIT 10;
+\q
 
 ## API文档
 
