@@ -359,7 +359,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    \q
 
 
-## 常用指令
+### 常用指令
+
 pip index versions redis # 检查最新版本
 
 psql
@@ -370,6 +371,14 @@ psql
 SELECT * FROM 表名;
 SELECT * FROM 表名 LIMIT 10;
 \q
+
+### 域名解析
+
+1. 购买域名的网站添加记录值：外网ip
+2. 宝塔点击网站 -> 设置 -> 域名管理（前后端项目设置成不一样的）
+3. 宝塔后端项目外网映射打开
+4. 宝塔后端项目SSL点击"Let's Encrypt"
+5. 完成ICP备案
 
 ## API文档
 
