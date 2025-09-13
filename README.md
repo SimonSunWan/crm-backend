@@ -226,6 +226,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    - 硬盘：至少 20GB 可用空间
    - Python 3.8+ 环境
 
+2. **进入workbench连接服务器并下载宝塔** wget -O install.sh http://download.bt.cn/install/install_6.0.sh && sh install.sh ed8484bec
+
 2. 阿里云服务器 -> 应用概详情 -> 端口放通
 
 ### 第一步：安装必要软件
@@ -330,6 +332,21 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    - 安全 -> 系统防火墙 -> 添加端口规则
    - 软件商店 -> PostgreSQL管理器 -> 数据库列表 -> 修改Postgres密码
    - 软件商店 -> PostgreSQL管理器 -> 配置修改 -> listen_addresses = '*'
+   - HTML项目管理 -> 配置文件 -> 
+   ```
+    #禁止访问的文件或目录
+    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md) {
+        return 404;
+    }
+    # API反向代理配置
+    location /api {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+   ```
 
 ### 注意事项
    
