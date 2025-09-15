@@ -56,7 +56,15 @@ def get_all_roles(db: Session = Depends(get_db)):
 
         role_responses = [RoleResponse.model_validate(role) for role in roles]
 
-        return ApiResponse(data=role_responses)
+        # 返回统一格式的响应
+        response_data = {
+            "records": role_responses,
+            "total": len(role_responses),
+            "current": 1,
+            "size": len(role_responses),
+        }
+
+        return ApiResponse(data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取所有角色失败: {str(e)}")
 

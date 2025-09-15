@@ -120,7 +120,25 @@ def get_menus(
 
             menu_tree = filter_tree(menu_tree, name, path, menu_type)
 
-        return ApiResponse(code=200, message="操作成功", data=menu_tree)
+        # 计算树形结构的总节点数（包括所有子节点）
+        def count_tree_nodes(tree):
+            count = len(tree)
+            for node in tree:
+                if node.children:
+                    count += count_tree_nodes(node.children)
+            return count
+
+        total_nodes = count_tree_nodes(menu_tree)
+
+        # 返回统一格式的响应（保持树形结构）
+        response_data = {
+            "records": menu_tree,
+            "total": total_nodes,
+            "current": 1,
+            "size": total_nodes,
+        }
+
+        return ApiResponse(code=200, message="操作成功", data=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取菜单列表失败: {str(e)}")
 
