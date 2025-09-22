@@ -18,6 +18,12 @@ class CamelCaseModel(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel_case, populate_by_name=True, from_attributes=True
     )
+    
+    def model_dump(self, **kwargs):
+        """默认使用by_alias=True"""
+        if 'by_alias' not in kwargs:
+            kwargs['by_alias'] = True
+        return super().model_dump(**kwargs)
 
 
 class TimestampMixin(BaseModel):

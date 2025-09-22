@@ -165,7 +165,7 @@ def update_internal_order(
         if not order:
             raise HTTPException(status_code=404, detail="保内工单未找到")
 
-        update_data = order_update.model_dump(exclude_unset=True)
+        update_data = order_update.model_dump(exclude_unset=True, by_alias=False)
 
         # 分离主工单数据和详情数据
         detail_fields = [
@@ -358,7 +358,7 @@ def update_external_order(
         if not order:
             raise HTTPException(status_code=404, detail="保外工单未找到")
 
-        update_data = order_update.model_dump(exclude_unset=True)
+        update_data = order_update.model_dump(exclude_unset=True, by_alias=False)
 
         # 分离主工单数据和详情数据
         detail_fields = [
