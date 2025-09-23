@@ -108,7 +108,7 @@ def create_internal_order(
 ):
     """创建保内工单"""
     try:
-        order_data = order.model_dump()
+        order_data = order.model_dump(by_alias=False)
         order_data["created_by"] = current_user.id
 
         # 分离主工单数据和详情数据
@@ -301,7 +301,7 @@ def create_external_order(
 ):
     """创建保外工单"""
     try:
-        order_data = order.model_dump()
+        order_data = order.model_dump(by_alias=False)
         order_data["created_by"] = current_user.id
 
         # 分离主工单数据和详情数据
