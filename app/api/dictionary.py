@@ -309,7 +309,7 @@ def update_dictionary_enum(
                 raise HTTPException(status_code=400, detail="键值已存在")
 
         updated_enum = dictionary_enum_crud.update(
-            db, enum_obj, enum_update.model_dump(exclude_unset=True)
+            db, enum_obj, enum_update.model_dump(exclude_unset=True, by_alias=False)
         )
         return ApiResponse(
             message="字典枚举更新成功",
