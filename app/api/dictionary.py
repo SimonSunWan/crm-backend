@@ -122,7 +122,7 @@ def create_dictionary_type(
         if dictionary_type_crud.get_by_code(db, type_data.code):
             raise HTTPException(status_code=400, detail="字典类型编码已存在")
 
-        created_type = dictionary_type_crud.create(db, type_data.model_dump())
+        created_type = dictionary_type_crud.create(db, type_data.model_dump(by_alias=False))
         return ApiResponse(
             message="字典类型创建成功",
             data=DictionaryTypeResponse.model_validate(created_type),
@@ -266,7 +266,7 @@ def create_dictionary_enum(
             )
 
         # 创建枚举数据
-        enum_dict = enum_data.model_dump()
+        enum_dict = enum_data.model_dump(by_alias=False)
         enum_dict["level"] = level
         enum_dict["path"] = path
 
