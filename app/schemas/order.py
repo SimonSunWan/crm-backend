@@ -27,6 +27,28 @@ class OrderBase(CamelCaseModel):
     seal_code: Optional[str] = None
     fault_description: Optional[str] = None
 
+
+class ExternalOrderBase(CamelCaseModel):
+    """保外工单基础模型"""
+
+    customer: str
+    vehicle_model: str
+    repair_shop: str
+    reporter_name: str
+    contact_info: str
+    report_date: date
+    insurer: str
+    assessor: str
+    license_plate: Optional[str] = None
+    vin_number: str
+    mileage: Optional[float] = 0.0
+    vehicle_location: Optional[str] = None
+    vehicle_date: Optional[date] = None
+    pack_code: Optional[str] = None
+    pack_date: Optional[date] = None
+    seal_code: Optional[str] = None
+    fault_description: Optional[str] = None
+
     @field_validator("vehicle_date", "pack_date", mode="before")
     @classmethod
     def validate_date_fields(cls, v):
@@ -80,7 +102,7 @@ class InternalOrderCreate(OrderBase):
     labors: Optional[List[Dict[str, Any]]] = None
 
 
-class ExternalOrderCreate(OrderBase):
+class ExternalOrderCreate(ExternalOrderBase):
     """保外工单创建模型"""
 
     under_warranty: bool = False
@@ -88,11 +110,8 @@ class ExternalOrderCreate(OrderBase):
     repair_person: Optional[str] = None
     repair_date: Optional[date] = None
     avic_responsibility: Optional[bool] = True
-    fault_classification: Optional[str] = None
-    fault_location: Optional[str] = None
-    part_category: Optional[str] = None
-    part_location: Optional[str] = None
     repair_description: Optional[str] = None
+    fault_location: Optional[str] = None
     spare_part_location: Optional[str] = None
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
@@ -152,8 +171,8 @@ class ExternalOrderUpdate(CamelCaseModel):
     reporter_name: Optional[str] = None
     contact_info: Optional[str] = None
     report_date: Optional[date] = None
-    project_type: Optional[str] = None
-    project_stage: Optional[str] = None
+    insurer: Optional[str] = None
+    assessor: Optional[str] = None
     license_plate: Optional[str] = None
     vin_number: Optional[str] = None
     mileage: Optional[float] = None
@@ -168,11 +187,8 @@ class ExternalOrderUpdate(CamelCaseModel):
     repair_person: Optional[str] = None
     repair_date: Optional[date] = None
     avic_responsibility: Optional[bool] = None
-    fault_classification: Optional[str] = None
-    fault_location: Optional[str] = None
-    part_category: Optional[str] = None
-    part_location: Optional[str] = None
     repair_description: Optional[str] = None
+    fault_location: Optional[str] = None
     spare_part_location: Optional[str] = None
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
@@ -272,11 +288,8 @@ class ExternalOrderDetailResponse(CamelCaseModel):
     repair_person: Optional[str] = None
     repair_date: Optional[date] = None
     avic_responsibility: Optional[bool] = True
-    fault_classification: Optional[str] = None
-    fault_location: Optional[str] = None
-    part_category: Optional[str] = None
-    part_location: Optional[str] = None
     repair_description: Optional[str] = None
+    fault_location: Optional[str] = None
     spare_part_location: Optional[str] = None
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
@@ -309,8 +322,8 @@ class ExternalOrderResponse(CamelCaseModel):
     reporter_name: str
     contact_info: str
     report_date: date
-    project_type: str
-    project_stage: str
+    insurer: str
+    assessor: str
     license_plate: Optional[str] = None
     vin_number: str
     mileage: Optional[float] = 0.0

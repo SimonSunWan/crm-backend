@@ -88,8 +88,8 @@ class ExternalOrder(Base, TimestampMixin):
     reporter_name = Column(String, nullable=False)
     contact_info = Column(String, nullable=False)
     report_date = Column(Date, nullable=False)
-    project_type = Column(String, nullable=False)
-    project_stage = Column(String, nullable=False)
+    insurer = Column(String, nullable=False)
+    assessor = Column(String, nullable=False)
     license_plate = Column(String)
     vin_number = Column(String, nullable=False)
     mileage = Column(Float, default=0.0)
@@ -122,11 +122,8 @@ class ExternalOrderDetail(Base, TimestampMixin):
     repair_person = Column(String)
     repair_date = Column(Date)
     avic_responsibility = Column(Boolean, default=True)
-    fault_classification = Column(String)
-    fault_location = Column(String)
-    part_category = Column(String)
-    part_location = Column(String)
     repair_description = Column(Text)
+    fault_location = Column(String)
 
     # 详情记录字段
     spare_part_location = Column(String)
