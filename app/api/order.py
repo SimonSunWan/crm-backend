@@ -220,6 +220,7 @@ def get_external_orders(
     vehicleModel: str = None,
     repairShop: str = None,
     reporterName: str = None,
+    sparePartLocation: str = None,
     dateRange: list = None,
     createdBy: int = None,
     db: Session = Depends(get_db),
@@ -256,6 +257,13 @@ def get_external_orders(
         if reporterName:
             query = query.filter(
                 external_order_crud.model.reporter_name.contains(reporterName)
+            )
+
+        if sparePartLocation:
+            # 通过关联的详情表筛选备件所属库位
+            from app.models.order import ExternalOrderDetail
+            query = query.join(ExternalOrderDetail).filter(
+                ExternalOrderDetail.spare_part_location.contains(sparePartLocation)
             )
 
         if dateRange and len(dateRange) == 2:
