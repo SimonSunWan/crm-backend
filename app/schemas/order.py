@@ -26,6 +26,7 @@ class OrderBase(CamelCaseModel):
     pack_date: Optional[date] = None
     seal_code: Optional[str] = None
     fault_description: Optional[str] = None
+    is_end: Optional[bool] = False
 
 
 class ExternalOrderBase(CamelCaseModel):
@@ -48,6 +49,7 @@ class ExternalOrderBase(CamelCaseModel):
     pack_date: Optional[date] = None
     seal_code: Optional[str] = None
     fault_description: Optional[str] = None
+    is_end: Optional[bool] = False
 
     @field_validator("vehicle_date", "pack_date", mode="before")
     @classmethod
@@ -139,6 +141,7 @@ class InternalOrderUpdate(CamelCaseModel):
     seal_code: Optional[str] = None
     under_warranty: Optional[bool] = None
     fault_description: Optional[str] = None
+    is_end: Optional[bool] = None
     # 详情记录字段
     repair_person: Optional[str] = None
     repair_date: Optional[date] = None
@@ -183,6 +186,7 @@ class ExternalOrderUpdate(CamelCaseModel):
     seal_code: Optional[str] = None
     under_warranty: Optional[bool] = None
     fault_description: Optional[str] = None
+    is_end: Optional[bool] = None
     # 详情记录字段
     repair_person: Optional[str] = None
     repair_date: Optional[date] = None
@@ -260,6 +264,7 @@ class InternalOrderResponse(CamelCaseModel):
     seal_code: Optional[str] = None
     under_warranty: bool = True
     fault_description: Optional[str] = None
+    is_end: bool = False
     create_time: datetime
     update_time: Optional[datetime] = None
     # 详情记录
@@ -334,6 +339,7 @@ class ExternalOrderResponse(CamelCaseModel):
     seal_code: Optional[str] = None
     under_warranty: bool = False
     fault_description: Optional[str] = None
+    is_end: bool = False
     create_time: datetime
     update_time: Optional[datetime] = None
     # 详情记录
