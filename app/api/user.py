@@ -41,7 +41,7 @@ def update_current_user_info(
     db: Session = Depends(get_db),
 ):
     """更新当前登录用户的个人信息"""
-    update_data = user_update.model_dump(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True, by_alias=False)
     role_codes = update_data.pop("roles", None)
 
     if "email" in update_data and update_data["email"] == "":
@@ -201,7 +201,7 @@ def create_user(
     from app.core.response_helpers import normalize_empty_strings
 
     # 处理角色数据
-    user_data = user.model_dump()
+    user_data = user.model_dump(by_alias=False)
     role_codes = (
         user_data.pop("roles", []) if isinstance(user_data.get("roles"), list) else []
     )
@@ -247,7 +247,7 @@ def update_user(
     user = user_crud.get_or_404(db, user_id, "用户未找到")
 
     # 处理角色数据
-    update_data = user_update.model_dump(exclude_unset=True)
+    update_data = user_update.model_dump(exclude_unset=True, by_alias=False)
     role_codes = update_data.pop("roles", None)
 
     # 将空字符串转换为None，避免唯一约束冲突

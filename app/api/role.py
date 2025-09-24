@@ -86,7 +86,7 @@ def create_role(
     validate_role_name_uniqueness(db, role.role_name, role_crud)
     validate_role_code_uniqueness(db, role.role_code, role_crud)
 
-    role_data = role.model_dump()
+    role_data = role.model_dump(by_alias=False)
     created_role = create_with_audit(db, role_crud, role_data, current_user, "create")
 
     return success_response("角色创建成功", RoleResponse.model_validate(created_role))
@@ -130,7 +130,7 @@ def update_role(
         validate_role_code_uniqueness(db, role_update.role_code, role_crud, role_id)
 
     # 更新角色数据并设置审计字段
-    update_data = role_update.model_dump(exclude_unset=True)
+    update_data = role_update.model_dump(exclude_unset=True, by_alias=False)
     updated_role = update_with_audit(
         db, role_crud, role, update_data, current_user, "update"
     )

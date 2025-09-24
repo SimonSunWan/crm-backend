@@ -312,7 +312,7 @@ def create_menu(
             raise HTTPException(status_code=400, detail="路由路径已存在")
 
         # 创建菜单数据
-        menu_data = menu.model_dump()
+        menu_data = menu.model_dump(by_alias=False)
         menu_data["created_by"] = current_user.user_name
 
         # 如果有parent_id，验证父菜单是否存在
@@ -378,7 +378,7 @@ def update_menu(
                 raise HTTPException(status_code=400, detail="路由路径已存在")
 
         # 更新菜单数据
-        update_data = menu.model_dump(exclude_unset=True)
+        update_data = menu.model_dump(exclude_unset=True, by_alias=False)
         update_data["updated_by"] = current_user.user_name
 
         updated_menu = menu_crud.update(db, existing_menu, update_data)
