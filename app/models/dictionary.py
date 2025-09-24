@@ -37,7 +37,7 @@ class DictionaryEnum(Base, TimestampMixin):
         Integer, ForeignKey("dic_type.id"), nullable=False, comment="字典类型ID"
     )
     parent_id = Column(
-        Integer, ForeignKey("dic_enum.id"), nullable=True, comment="父级枚举ID"
+        Integer, ForeignKey("dic_enum.id", ondelete="CASCADE"), nullable=True, comment="父级枚举ID"
     )
     key_value = Column(String, nullable=False, comment="键值")
     dict_value = Column(String, nullable=False, comment="字典值")

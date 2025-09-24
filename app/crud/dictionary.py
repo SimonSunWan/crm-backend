@@ -104,6 +104,29 @@ class CRUDDictionaryEnum(CRUDBase[DictionaryEnum]):
         db.query(self.model).filter(self.model.type_id == type_id).delete()
         db.commit()
 
+    def delete_cascade(self, db: Session, enum_id: int):
+        """级联删除字典枚举及其所有子级"""
+        # 获取要删除的枚举对象
+        enum_obj = self.get_or_404(db, enum_id, "字典枚举未找到")
+        
+        # 递归删除所有子级
+        self._delete_children_recursive(db, enum_id)
+        
+        # 删除当前枚举
+        db.delete(enum_obj)
+        db.commit()
+
+    def _delete_children_recursive(self, db: Session, parent_id: int):
+        """递归删除所有子级枚举"""
+        # 获取所有直接子级
+        children = self.get_children_by_parent_id(db, parent_id)
+        
+        for child in children:
+            # 递归删除子级的子级
+            self._delete_children_recursive(db, child.id)
+            # 删除当前子级
+            db.delete(child)
+
 
 dictionary_type_crud = CRUDDictionaryType(DictionaryType)
 dictionary_enum_crud = CRUDDictionaryEnum(DictionaryEnum)

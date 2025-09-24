@@ -323,10 +323,9 @@ def update_dictionary_enum(
 
 @router.delete("/enums/{enum_id}", response_model=ApiResponse)
 def delete_dictionary_enum(enum_id: int, db: Session = Depends(get_db)):
-    """删除字典枚举"""
+    """删除字典枚举（级联删除子级）"""
     try:
-        enum_obj = dictionary_enum_crud.get_or_404(db, enum_id, "字典枚举未找到")
-        dictionary_enum_crud.delete(db, enum_obj)
+        dictionary_enum_crud.delete_cascade(db, enum_id)
         return ApiResponse(message="字典枚举删除成功")
     except HTTPException:
         raise
