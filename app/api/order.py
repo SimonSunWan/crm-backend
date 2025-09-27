@@ -125,6 +125,7 @@ def create_internal_order(
             "spare_parts",
             "costs",
             "labors",
+            "cost_remarks",
         ]
 
         detail_data = {}
@@ -181,6 +182,7 @@ def update_internal_order(
             "spare_parts",
             "costs",
             "labors",
+            "cost_remarks",
         ]
 
         detail_data = {}
@@ -326,6 +328,7 @@ def create_external_order(
             "spare_parts",
             "costs",
             "labors",
+            "cost_remarks",
         ]
 
         detail_data = {}
@@ -382,6 +385,7 @@ def update_external_order(
             "spare_parts",
             "costs",
             "labors",
+            "cost_remarks",
         ]
 
         detail_data = {}

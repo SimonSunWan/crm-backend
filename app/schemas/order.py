@@ -75,6 +75,7 @@ class OrderDetailBase(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
 
     @field_validator("repair_date", mode="before")
     @classmethod
@@ -102,6 +103,7 @@ class InternalOrderCreate(OrderBase):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
 
 
 class ExternalOrderCreate(ExternalOrderBase):
@@ -118,6 +120,7 @@ class ExternalOrderCreate(ExternalOrderBase):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
 
 
 class InternalOrderUpdate(CamelCaseModel):
@@ -155,6 +158,7 @@ class InternalOrderUpdate(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
 
     @field_validator("vehicle_date", "pack_date", "repair_date", mode="before")
     @classmethod
@@ -197,6 +201,7 @@ class ExternalOrderUpdate(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
 
     @field_validator("vehicle_date", "pack_date", "repair_date", mode="before")
     @classmethod
@@ -224,6 +229,7 @@ class InternalOrderDetailResponse(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
     create_time: datetime
     update_time: Optional[datetime] = None
 
@@ -299,6 +305,7 @@ class ExternalOrderDetailResponse(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    cost_remarks: Optional[List[Dict[str, Any]]] = None
     create_time: datetime
     update_time: Optional[datetime] = None
 

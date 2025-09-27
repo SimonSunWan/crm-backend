@@ -72,6 +72,7 @@ class InternalOrderDetail(Base, TimestampMixin):
     spare_parts = Column(JSON)  # 备件使用详情
     costs = Column(JSON)  # 费用使用详情
     labors = Column(JSON)  # 工时详情
+    cost_remarks = Column(JSON)  # 费用使用备注
 
     # 关联主工单
     order = relationship("InternalOrder", back_populates="details")
@@ -132,6 +133,7 @@ class ExternalOrderDetail(Base, TimestampMixin):
     spare_parts = Column(JSON)  # 备件使用详情
     costs = Column(JSON)  # 费用使用详情
     labors = Column(JSON)  # 工时详情
+    cost_remarks = Column(JSON)  # 费用使用备注
 
     # 关联主工单
     order = relationship("ExternalOrder", back_populates="details")
