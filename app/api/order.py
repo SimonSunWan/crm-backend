@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.deps import get_current_active_user
@@ -27,6 +27,7 @@ def get_internal_orders(
     vehicleModel: str = None,
     repairShop: str = None,
     reporterName: str = None,
+    sparePartLocation: str = None,
     dateRange: list = None,
     createdBy: int = None,
     db: Session = Depends(get_db),
@@ -65,6 +66,13 @@ def get_internal_orders(
                 internal_order_crud.model.reporter_name.contains(reporterName)
             )
 
+        if sparePartLocation:
+            # 通过关联的详情表筛选备件所属库位
+            from app.models.order import InternalOrderDetail
+            query = query.join(InternalOrderDetail).filter(
+                InternalOrderDetail.spare_part_location.contains(sparePartLocation)
+            )
+
         if dateRange and len(dateRange) == 2:
             start_date, end_date = dateRange
             if start_date and end_date:
@@ -76,16 +84,26 @@ def get_internal_orders(
         # 获取总数
         total = query.count()
 
-        # 按创建时间倒序排序并获取分页数据
+        # 按创建时间倒序排序并获取分页数据，同时关联详情表获取备件所属库位
+        from app.models.order import InternalOrderDetail
         orders = (
-            query.order_by(internal_order_crud.model.create_time.desc())
+            query.options(joinedload(internal_order_crud.model.details))
+            .order_by(internal_order_crud.model.create_time.desc())
             .offset(skip)
             .limit(size)
             .all()
         )
-        order_responses = [
-            InternalOrderResponse.model_validate(order) for order in orders
-        ]
+        
+        # 构建响应数据，包含备件所属库位信息
+        order_responses = []
+        for order in orders:
+            order_dict = InternalOrderResponse.model_validate(order).model_dump()
+            # 从详情记录中获取备件所属库位
+            if order.details and len(order.details) > 0:
+                order_dict['sparePartLocation'] = order.details[0].spare_part_location
+            else:
+                order_dict['sparePartLocation'] = None
+            order_responses.append(order_dict)
 
         # 返回包含分页信息的响应
         response_data = {
