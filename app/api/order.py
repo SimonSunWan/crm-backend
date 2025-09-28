@@ -125,6 +125,7 @@ def create_internal_order(
             "spare_parts",
             "costs",
             "labors",
+            "repair_progress",
             "cost_remarks",
         ]
 
@@ -182,6 +183,7 @@ def update_internal_order(
             "spare_parts",
             "costs",
             "labors",
+            "repair_progress",
             "cost_remarks",
         ]
 
@@ -328,6 +330,7 @@ def create_external_order(
             "spare_parts",
             "costs",
             "labors",
+            "repair_progress",
             "cost_remarks",
         ]
 
@@ -385,6 +388,7 @@ def update_external_order(
             "spare_parts",
             "costs",
             "labors",
+            "repair_progress",
             "cost_remarks",
         ]
 

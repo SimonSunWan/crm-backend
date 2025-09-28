@@ -77,6 +77,7 @@ class OrderDetailBase(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    repair_progress: Optional[str] = None
     cost_remarks: Optional[List[Dict[str, Any]]] = None
 
     @field_validator("repair_date", mode="before")
@@ -205,6 +206,7 @@ class ExternalOrderUpdate(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    repair_progress: Optional[str] = None
     cost_remarks: Optional[List[Dict[str, Any]]] = None
 
     @field_validator("vehicle_date", "pack_date", "repair_date", mode="before")
@@ -310,6 +312,7 @@ class ExternalOrderDetailResponse(CamelCaseModel):
     spare_parts: Optional[List[Dict[str, Any]]] = None
     costs: Optional[List[Dict[str, Any]]] = None
     labors: Optional[List[Dict[str, Any]]] = None
+    repair_progress: Optional[str] = None
     cost_remarks: Optional[List[Dict[str, Any]]] = None
     create_time: datetime
     update_time: Optional[datetime] = None
