@@ -406,7 +406,13 @@ def download_dictionary_enum_template(type_id: int, db: Session = Depends(get_db
             io.BytesIO(output.read()),
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
-                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}",
+                "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "X-Content-Type-Options": "nosniff",
+                "X-Download-Options": "noopen"
             }
         )
     except HTTPException:
