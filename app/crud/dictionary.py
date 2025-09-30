@@ -97,6 +97,16 @@ class CRUDDictionaryEnum(CRUDBase[DictionaryEnum]):
                     parent.children.append(enum)
                     parent.hasChildren = True
 
+        # 对树结构进行排序
+        def sort_tree(nodes):
+            # 按sort_order排序
+            nodes.sort(key=lambda x: x.sort_order or 0)
+            # 递归排序子节点
+            for node in nodes:
+                if hasattr(node, 'children') and node.children:
+                    sort_tree(node.children)
+        
+        sort_tree(tree)
         return tree
 
     def delete_by_type_id(self, db: Session, type_id: int):
@@ -126,6 +136,93 @@ class CRUDDictionaryEnum(CRUDBase[DictionaryEnum]):
             self._delete_children_recursive(db, child.id)
             # 删除当前子级
             db.delete(child)
+
+    def batch_import(self, db: Session, type_id: int, import_data: list):
+        """批量导入字典枚举"""
+        from app.schemas.dictionary import BatchImportResult
+        
+        success_count = 0
+        fail_count = 0
+        errors = []
+        
+        # 创建键值到ID的映射，用于处理父子关系
+        key_to_id_map = {}
+        
+        # 按层级排序，确保父级先创建
+        sorted_data = sorted(import_data, key=lambda x: x.level or 1)
+        
+        for index, item in enumerate(sorted_data):
+            try:
+                # 检查键值是否已存在（包括当前批次中已处理的）
+                existing_enum = self.get_by_type_id_and_key(db, type_id, item.key_value)
+                if existing_enum:
+                    # 如果已存在，将其ID添加到映射中，以便子级可以引用
+                    key_to_id_map[item.key_value] = existing_enum.id
+                    continue
+                
+                # 检查是否在当前批次中已处理过
+                if item.key_value in key_to_id_map:
+                    continue
+                
+                # 处理父级关系
+                parent_id = None
+                if item.parent_key_value:
+                    # 首先检查当前批次中是否已处理
+                    parent_id = key_to_id_map.get(item.parent_key_value)
+                    if not parent_id:
+                        # 如果当前批次中没有，检查数据库中是否存在
+                        parent_enum = self.get_by_type_id_and_key(db, type_id, item.parent_key_value)
+                        if parent_enum:
+                            parent_id = parent_enum.id
+                            key_to_id_map[item.parent_key_value] = parent_id
+                        else:
+                            errors.append({
+                                'row': index + 1,
+                                'message': f"父级编码 '{item.parent_key_value}' 不存在"
+                            })
+                            fail_count += 1
+                            continue
+                
+                # 计算层级和路径
+                level = item.level or 1
+                path = item.key_value
+                
+                if parent_id:
+                    parent_enum = self.get(db, parent_id)
+                    if parent_enum:
+                        level = (parent_enum.level or 0) + 1
+                        path = f"{parent_enum.path}/{item.key_value}" if parent_enum.path else f"{parent_enum.key_value}/{item.key_value}"
+                
+                # 创建枚举对象
+                enum_dict = {
+                    'type_id': type_id,
+                    'parent_id': parent_id,
+                    'key_value': item.key_value,
+                    'dict_value': item.dict_value,
+                    'sort_order': item.sort_order or 0,
+                    'level': level,
+                    'path': path,
+                    'status': True
+                }
+                
+                enum_obj = self.create(db, obj_in=enum_dict)
+                key_to_id_map[item.key_value] = enum_obj.id
+                success_count += 1
+                
+            except Exception as e:
+                errors.append({
+                    'row': index + 1,
+                    'message': f"创建失败: {str(e)}"
+                })
+                fail_count += 1
+        
+        return BatchImportResult(
+            success=fail_count == 0,
+            message=f"导入完成，成功 {success_count} 条，失败 {fail_count} 条",
+            success_count=success_count,
+            fail_count=fail_count,
+            errors=errors if errors else None
+        )
 
 
 dictionary_type_crud = CRUDDictionaryType(DictionaryType)

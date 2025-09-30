@@ -11,6 +11,8 @@ from app.schemas.dictionary import (
     DictionaryTypeCreate,
     DictionaryTypeResponse,
     DictionaryTypeUpdate,
+    BatchImportDictionaryEnumRequest,
+    BatchImportResult,
 )
 
 router = APIRouter()
@@ -331,3 +333,83 @@ def delete_dictionary_enum(enum_id: int, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除字典枚举失败: {str(e)}")
+
+
+@router.post("/enums/batch-import", response_model=ApiResponse)
+def batch_import_dictionary_enums(
+    request_data: BatchImportDictionaryEnumRequest, db: Session = Depends(get_db)
+):
+    """批量导入字典枚举"""
+    try:
+        result = dictionary_enum_crud.batch_import(db, request_data.type_id, request_data.data)
+        return ApiResponse(data=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量导入失败: {str(e)}")
+
+
+@router.get("/enums/template/{type_id}")
+def download_dictionary_enum_template(type_id: int, db: Session = Depends(get_db)):
+    """下载字典枚举导入模板"""
+    try:
+        from fastapi.responses import StreamingResponse
+        import io
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, PatternFill
+        
+        # 检查字典类型是否存在
+        dictionary_type = dictionary_type_crud.get(db, type_id)
+        if not dictionary_type:
+            raise HTTPException(status_code=404, detail="字典类型不存在")
+        
+        # 创建Excel工作簿
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        # 清理工作表名称，移除不允许的字符
+        safe_name = dictionary_type.name.replace('/', '_').replace('\\', '_').replace('*', '_').replace('?', '_').replace('[', '_').replace(']', '_')
+        ws.title = f"{safe_name}导入模板"
+        
+        # 设置标题行
+        headers = ["枚举编码", "枚举名称", "排序", "父级编码", "层级"]
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        
+        # 设置列宽
+        column_widths = [15, 20, 8, 15, 8]
+        for col, width in enumerate(column_widths, 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = width
+        
+        # 添加简单示例数据
+        example_data = [
+            ["cy", "乘用车", 1, "", 1],
+            ["cy_sedan", "轿车", 1, "cy", 2]
+        ]
+        
+        for row, data in enumerate(example_data, 2):
+            for col, value in enumerate(data, 1):
+                ws.cell(row=row, column=col, value=value)
+        
+        # 保存到内存
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # 返回文件流
+        filename = f"{dictionary_type.name}_导入模板.xlsx"
+        # 对文件名进行URL编码以支持中文
+        import urllib.parse
+        encoded_filename = urllib.parse.quote(filename.encode('utf-8'))
+        
+        return StreamingResponse(
+            io.BytesIO(output.read()),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"生成模板失败: {str(e)}")

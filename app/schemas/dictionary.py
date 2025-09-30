@@ -58,3 +58,25 @@ class DictionaryEnumResponse(DictionaryEnumBase):
 
 class DictionaryTypeWithEnumsResponse(DictionaryTypeResponse):
     enums: List[DictionaryEnumResponse] = []
+
+
+# 批量导入相关Schema
+class BatchImportEnumItem(CamelCaseModel):
+    key_value: str
+    dict_value: str
+    sort_order: Optional[int] = 0
+    parent_key_value: Optional[str] = None
+    level: Optional[int] = 1
+
+
+class BatchImportDictionaryEnumRequest(CamelCaseModel):
+    type_id: int
+    data: List[BatchImportEnumItem]
+
+
+class BatchImportResult(CamelCaseModel):
+    success: bool
+    message: str
+    success_count: int
+    fail_count: int
+    errors: Optional[List[dict]] = None
