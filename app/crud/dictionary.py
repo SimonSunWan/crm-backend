@@ -158,10 +158,12 @@ class CRUDDictionaryEnum(CRUDBase[DictionaryEnum]):
                 if existing_enum:
                     # 如果已存在，将其ID添加到映射中，以便子级可以引用
                     key_to_id_map[item.key_value] = existing_enum.id
+                    success_count += 1  # 已存在的项也算成功处理
                     continue
                 
                 # 检查是否在当前批次中已处理过
                 if item.key_value in key_to_id_map:
+                    success_count += 1  # 当前批次中已处理的项也算成功
                     continue
                 
                 # 处理父级关系
@@ -216,9 +218,14 @@ class CRUDDictionaryEnum(CRUDBase[DictionaryEnum]):
                 })
                 fail_count += 1
         
+        if fail_count == 0:
+            message = f"导入成功，共导入 {success_count} 条数据"
+        else:
+            message = f"导入失败，{fail_count} 条数据导入失败"
+        
         return BatchImportResult(
             success=fail_count == 0,
-            message=f"导入完成，成功 {success_count} 条，失败 {fail_count} 条",
+            message=message,
             success_count=success_count,
             fail_count=fail_count,
             errors=errors if errors else None
