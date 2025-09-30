@@ -376,10 +376,9 @@ def download_dictionary_enum_template(type_id: int, db: Session = Depends(get_db
             cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
             cell.alignment = Alignment(horizontal="center", vertical="center")
         
-        # 设置列宽
-        column_widths = [15, 20, 8, 15, 8]
-        for col, width in enumerate(column_widths, 1):
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = width
+        # 设置所有列都一样宽
+        for col in range(1, len(headers) + 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 15
         
         # 添加简单示例数据
         example_data = [
@@ -389,7 +388,8 @@ def download_dictionary_enum_template(type_id: int, db: Session = Depends(get_db
         
         for row, data in enumerate(example_data, 2):
             for col, value in enumerate(data, 1):
-                ws.cell(row=row, column=col, value=value)
+                cell = ws.cell(row=row, column=col, value=value)
+                cell.alignment = Alignment(horizontal="left", vertical="center")
         
         # 保存到内存
         output = io.BytesIO()
