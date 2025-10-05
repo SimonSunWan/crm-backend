@@ -147,6 +147,20 @@ def init_menu():
                 "parent_id": None,  # 先设为None，后面会更新
                 "auth_mark": None,
             },
+            # 部门管理
+            {
+                "name": "部门管理",
+                "path": "/system/department",
+                "icon": "",
+                "sort": 6,
+                "is_hide": False,
+                "is_keep_alive": False,
+                "is_link": False,
+                "is_enable": True,
+                "menu_type": "menu",
+                "parent_id": None,  # 先设为None，后面会更新
+                "auth_mark": None,
+            },
         ]
 
         # 创建菜单并获取生成的ID
@@ -207,7 +221,7 @@ def init_menu():
 
         # 系统管理下的子菜单
         system_menu = db.query(Menu).filter(Menu.name == "系统管理").first()
-        system_submenus = ["个人中心", "用户管理", "角色管理", "菜单管理", "字典管理"]
+        system_submenus = ["个人中心", "用户管理", "角色管理", "菜单管理", "字典管理", "部门管理"]
 
         for submenu_name in system_submenus:
             submenu = db.query(Menu).filter(Menu.name == submenu_name).first()

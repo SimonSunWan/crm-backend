@@ -134,8 +134,12 @@ def get_users(
         # 直接使用布尔值进行筛选
         query = query.filter(User.status == status)
 
-    # 预加载角色信息
-    query = query.options(joinedload(User.roles))
+    # 预加载角色、部门成员和部门负责人信息
+    query = query.options(
+        joinedload(User.roles), 
+        joinedload(User.departments),
+        joinedload(User.leading_departments)
+    )
 
     # 获取总数
     total = query.count()

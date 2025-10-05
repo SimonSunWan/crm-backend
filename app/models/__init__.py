@@ -5,20 +5,24 @@ from .menu import Menu
 from .dictionary import DictionaryType, DictionaryEnum
 from .system import SystemSetting
 from .order import InternalOrder, InternalOrderDetail, ExternalOrder, ExternalOrderDetail
+from .department import Department, UserDepartment, DepartmentLeader
 from .user_role import user_role
 from .role_menu import role_menu
 
 __all__ = [
     "User",
-    "Role", 
+    "Role",
     "Menu",
     "DictionaryType",
     "DictionaryEnum",
     "SystemSetting",
     "InternalOrder",
-    "InternalOrderDetail", 
+    "InternalOrderDetail",
     "ExternalOrder",
     "ExternalOrderDetail",
+    "Department",
+    "UserDepartment",
+    "DepartmentLeader",
     "user_role",
     "role_menu"
 ]

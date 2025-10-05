@@ -36,6 +36,7 @@ class UserResponse(UserBase):
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     role_names: Optional[List[str]] = None  # 角色名称数组
+    departments: Optional[List[str]] = None  # 部门名称数组
 
     model_config = {"exclude": {"hashed_password"}}
 
@@ -68,6 +69,27 @@ class UserResponse(UserBase):
         else:
             data["roles"] = []
             data["role_names"] = []
+
+        # 处理部门数据 - 包含部门成员和部门负责人
+        department_names = []
+        
+        # 添加部门成员
+        if hasattr(obj, "departments") and obj.departments:
+            member_dept_names = [dept.dept_name for dept in obj.departments]
+            department_names.extend(member_dept_names)
+        
+        # 添加部门负责人
+        if hasattr(obj, "leading_departments") and obj.leading_departments:
+            leader_dept_names = [dept.dept_name for dept in obj.leading_departments]
+            department_names.extend(leader_dept_names)
+        
+        # 去重并保持顺序
+        unique_departments = []
+        for dept_name in department_names:
+            if dept_name not in unique_departments:
+                unique_departments.append(dept_name)
+        
+        data["departments"] = unique_departments
 
         # 处理status字段：已经是Boolean类型
         if hasattr(obj, "status"):
