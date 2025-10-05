@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.deps import get_current_active_user
+from app.core.permission_utils import get_order_permission_filter
 from app.crud.order import external_order_crud, internal_order_crud
 from app.models.user import User
 from app.schemas.base import ApiResponse
@@ -40,7 +41,12 @@ def get_internal_orders(
         # 构建基础查询
         query = db.query(internal_order_crud.model)
 
-        # 根据createdBy参数过滤
+        # 根据用户权限过滤数据
+        permission_filter = get_order_permission_filter(current_user, db)
+        if permission_filter is not None:
+            query = query.filter(internal_order_crud.model.created_by.in_(permission_filter))
+
+        # 根据createdBy参数过滤（如果指定了createdBy，则进一步过滤）
         if createdBy is not None:
             query = query.filter(internal_order_crud.model.created_by == createdBy)
 
@@ -255,7 +261,12 @@ def get_external_orders(
         # 构建基础查询
         query = db.query(external_order_crud.model)
 
-        # 根据createdBy参数过滤
+        # 根据用户权限过滤数据
+        permission_filter = get_order_permission_filter(current_user, db)
+        if permission_filter is not None:
+            query = query.filter(external_order_crud.model.created_by.in_(permission_filter))
+
+        # 根据createdBy参数过滤（如果指定了createdBy，则进一步过滤）
         if createdBy is not None:
             query = query.filter(external_order_crud.model.created_by == createdBy)
 
