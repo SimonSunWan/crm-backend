@@ -40,6 +40,7 @@ class InternalOrder(Base, TimestampMixin):
     under_warranty = Column(Boolean, default=True)
     fault_description = Column(Text)
     order_progress = Column(Text)  # 工单进度
+    avic_order_number = Column(String)  # 中航派工单号
     is_end = Column(Boolean, default=False)  # 是否完成所有步骤
     created_by = Column(Integer, ForeignKey("user.id"), nullable=True)
 

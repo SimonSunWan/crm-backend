@@ -27,6 +27,7 @@ class OrderBase(CamelCaseModel):
     seal_code: Optional[str] = None
     fault_description: Optional[str] = None
     order_progress: Optional[str] = None
+    avic_order_number: Optional[str] = None
     is_end: Optional[bool] = False
 
 
@@ -93,6 +94,7 @@ class InternalOrderCreate(OrderBase):
     """保内工单创建模型"""
 
     under_warranty: bool = True
+    avic_order_number: Optional[str] = None
     # 详情记录字段
     repair_person: Optional[str] = None
     repair_date: Optional[date] = None
@@ -148,6 +150,7 @@ class InternalOrderUpdate(CamelCaseModel):
     under_warranty: Optional[bool] = None
     fault_description: Optional[str] = None
     order_progress: Optional[str] = None
+    avic_order_number: Optional[str] = None
     is_end: Optional[bool] = None
     # 详情记录字段
     repair_person: Optional[str] = None
@@ -277,6 +280,7 @@ class InternalOrderResponse(CamelCaseModel):
     under_warranty: bool = True
     fault_description: Optional[str] = None
     order_progress: Optional[str] = None
+    avic_order_number: Optional[str] = None
     is_end: bool = False
     create_time: datetime
     update_time: Optional[datetime] = None
